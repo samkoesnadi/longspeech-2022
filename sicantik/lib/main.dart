@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:sicantik/helpers/speech_to_text.dart';
 import 'package:sicantik/internationalization.dart';
 import 'package:sicantik/screens/home_screen.dart';
 import 'package:sicantik/theme_data.dart';
@@ -12,13 +11,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  await GetStorage.init();
-  GetStorage box = GetStorage();
-
-  // TODO: for sure, erase, because in production, we want to store things persistently
-  await box.erase();
-
-  await SpeechToTextHandler.initSpeechState();
+  await GetStorage.init("notes");
 
   VisibilityDetectorController.instance.updateInterval =
       const Duration(milliseconds: 5);

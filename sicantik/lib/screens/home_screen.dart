@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sicantik/helpers/speech_to_text.dart';
 import 'package:sicantik/screens/new_note_screen.dart';
 import 'package:sicantik/utils.dart';
 import 'package:sicantik/widgets/list_view.dart';
@@ -35,7 +36,24 @@ class HomeScreenState extends State<HomeScreen> {
       CardData(title: '0', description: 'asdf'),
       CardData(title: '0', description: 'asdf'),
       CardData(title: '0', description: 'asdf'),
-      CardData(title: '0', description: 'asdf')
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
+      CardData(title: '0', description: 'asdf'),
     ];
     return MyScaffold(
         body: scrollbar_wrapper(
@@ -49,8 +67,8 @@ class HomeScreenState extends State<HomeScreen> {
           InkWell(
               onTap: () {}, child: const Icon(Icons.account_circle_rounded)),
         ],
-        onTap_floatingActionButton: (curr_floatingActionButton_icon) {
-          Get.to(() => NewNoteScreen());
+        onTap_floatingActionButton: () async {
+          await Get.to(() => NewNoteScreen());
         }
     );
   }

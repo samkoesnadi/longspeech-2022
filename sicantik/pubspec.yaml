@@ -38,7 +38,6 @@ dependencies:
   get: ^4.6.5
   expansion_tile_card: ^2.0.0
   logger: ^1.1.0
-  spring: ^2.0.2
   get_storage: ^2.0.3
   visibility_detector: ^0.3.3
   google_fonts: ^3.0.1
