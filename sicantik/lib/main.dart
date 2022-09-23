@@ -11,7 +11,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  await GetStorage.init("notes");
+  await GetStorage.init();
 
   VisibilityDetectorController.instance.updateInterval =
       const Duration(milliseconds: 5);

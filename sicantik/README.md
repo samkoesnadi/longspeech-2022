@@ -2,6 +2,13 @@
 
 ## Data structure
 
-* Notes box
-  * datetime : list of all uuids
-  * {datetime} : {full_text, summarized}
+* notes box
+  * keys : list of all datetimes
+  * {datetime} : {{
+      title,
+      short_summarized
+    }}
+
+* {datetime}
+  * full : string
+  * summarized : string
