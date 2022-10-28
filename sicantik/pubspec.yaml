@@ -48,11 +48,20 @@ dependencies:
   scidart: ^0.0.2-dev.9
   stemmer: ^2.2.0
   document_analysis: ^0.2.0
-  highlight_text: ^1.4.1
   speech_to_text: ^5.6.1
 #  google_mobile_ads: ^2.0.1
   rflutter_alert: ^2.0.4
   appcheck: ^1.0.5
+  fuzzy: ^0.4.0-nullsafety.0
+  flutter_speed_dial: ^6.0.0
+  favorite_button: ^0.0.4
+  music_visualizer: ^1.0.2
+  uuid: ^3.0.6
+  flutter_quill: ^6.0.6+1
+  flutter_quill_extensions: ^0.1.0
+  path_provider: ^2.0.9
+  filesystem_picker: ^2.0.0
+  file_picker: ^4.6.1
 
 dev_dependencies:
   flutter_test:
@@ -77,8 +86,34 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-#  assets:
-#    -
+  assets:
+    - assets/
+
+  fonts:
+    - family: monospace
+      fonts:
+        - asset: assets/fonts/MonoSpace.ttf
+    - family: serif
+      fonts:
+        - asset: assets/fonts/Serif.ttf
+    - family: sans-serif
+      fonts:
+        - asset: assets/fonts/SansSerif.ttf
+    - family: ibarra-real-nova
+      fonts:
+        - asset: assets/fonts/IbarraRealNova-Regular.ttf
+    - family: square-peg
+      fonts:
+        - asset: assets/fonts/SquarePeg-Regular.ttf
+    - family: nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+    - family: pacifico
+      fonts:
+        - asset: assets/fonts/Pacifico-Regular.ttf
+    - family: roboto-mono
+      fonts:
+        - asset: assets/fonts/RobotoMono-Regular.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

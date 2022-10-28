@@ -8,7 +8,7 @@ const String visibleHeadlinesKey = "visibleHeadlines";
 Widget scrollbar_wrapper(
     {required Widget child,
     required ScrollController scrollController,
-    required List<CardData> card_data_list,
+    required List<CardData> cardData,
     bool isVertical = true,
     double thumbDragWidth = 25,
     double thumbWidth = 20,
@@ -25,7 +25,7 @@ Widget scrollbar_wrapper(
         if (isMoving && visibleHeadlines != null) {
           visibleHeadlines.sort();
           String scrollBarLabel = visibleHeadlines
-              .map((index) => card_data_list[index].title)
+              .map((index) => cardData[index].title)
               .join('\n');
 
           return Container(

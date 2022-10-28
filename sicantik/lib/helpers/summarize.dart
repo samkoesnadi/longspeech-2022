@@ -4,7 +4,19 @@ import 'package:scidart/numdart.dart';
 import 'package:sicantik/helpers/matrix_creator.dart';
 import 'package:stemmer/stemmer.dart';
 
-String summarize({required String paragraph, int amount_of_sentences = 10}) {
+class Sentence {
+  String sentence;
+  bool summarized;
+
+  Sentence(this.sentence, this.summarized);
+
+  @override
+  String toString() {
+    return '{ ${this.sentence}, ${this.summarized} }';
+  }
+}
+
+List<Sentence> summarize({required String paragraph, int amountOfSentences = 10}) {
   PorterStemmer stemmer = PorterStemmer();
 
   List<String> docs = split_into_sentences(paragraph);
@@ -18,42 +30,30 @@ String summarize({required String paragraph, int amount_of_sentences = 10}) {
 
   var svd = SVD(matrixTranspose(inp2d));
   List<double> ranks = [];
-  for (var column_vector in matrixTranspose(svd.V())) {
+  for (var columnVector in matrixTranspose(svd.V())) {
     double rank = 0;
     for (List<double> sv
-        in IterableZip([svd.singularValues(), column_vector])) {
+        in IterableZip([svd.singularValues(), columnVector])) {
       rank += sv[0] * sv[1];
     }
     ranks.add(rank);
   }
 
-  List<Sentence> sentences_reordered = [];
+  // Get the threshold probability
+  List<double> sortedRanks = [...ranks];
+  sortedRanks.sort((b, a) => a.compareTo(b));
+  double thresholdProbability = sortedRanks.last;
+
+  if (sortedRanks.length > amountOfSentences) {
+    thresholdProbability = sortedRanks[amountOfSentences - 1];
+  }
+
+  List<Sentence> sentences = [];
   for (int i = 0; i < docs.length; i++) {
-    sentences_reordered.add(Sentence(docs[i], ranks[i], i));
+    sentences.add(Sentence(docs[i], thresholdProbability <= ranks[i]));
   }
-  sentences_reordered.sort((b, a) => a.probability.compareTo(b.probability));
 
-  // just take the top-n amount
-  sentences_reordered =
-      sentences_reordered.getRange(0, amount_of_sentences).toList();
-  sentences_reordered.sort((a, b) => a.order.compareTo(b.order));
-
-  String result = sentences_reordered.join(" ");
-
-  return result;
-}
-
-class Sentence {
-  String sentence;
-  double probability;
-  int order;
-
-  Sentence(this.sentence, this.probability, this.order);
-
-  @override
-  String toString() {
-    return '{ ${this.order}: ${this.sentence}, ${this.probability} }';
-  }
+  return sentences;
 }
 
 List<String> split_into_sentences(String text) {

@@ -1,71 +1,106 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:get/get.dart';
-import 'package:sicantik/theme_data.dart';
 
-class MyScaffold extends StatelessWidget {
+class MyScaffold extends StatefulWidget {
   MyScaffold(
       {Key? key,
       required this.body,
       required this.title,
-      required this.onTap_floatingActionButton,
-      this.appBar_actions,
-      floating_action_button_controller,
-      sound_level_controller})
+      this.onOpenFloatingActionButton,
+      this.onCloseFloatingActionButton,
+      this.appBarActions,
+      this.appBarBottom,
+      this.fABLocation = FloatingActionButtonLocation.endDocked,
+      this.speedDialChildren = const [],
+      this.bottomNavigationBarChildren = const [],
+      floatingActionButtonController,
+      soundLevelController})
       : super(key: key) {
-    if (floating_action_button_controller == null) {
-      this.floating_action_button_controller = (Icons.add).obs;
+    if (floatingActionButtonController == null) {
+      this.floatingActionButtonController = (Icons.add).obs;
     } else {
-      this.floating_action_button_controller = floating_action_button_controller;
+      this.floatingActionButtonController = floatingActionButtonController;
     }
 
-    if (sound_level_controller == null) {
-      this.sound_level_controller = (0.0).obs;
+    if (soundLevelController == null) {
+      this.soundLevelController = (0.0).obs;
     } else {
-      this.sound_level_controller = sound_level_controller;
+      this.soundLevelController = soundLevelController;
     }
   }
 
   Widget body;
   Widget title;
-  List<Widget>? appBar_actions;
-  Function() onTap_floatingActionButton;
+  List<Widget>? appBarActions;
+  PreferredSizeWidget? appBarBottom;
+  VoidCallback? onOpenFloatingActionButton;
+  VoidCallback? onCloseFloatingActionButton;
+  var fABLocation;
+  List<SpeedDialChild> speedDialChildren;
+  List<Widget> bottomNavigationBarChildren;
 
-  late Rx<IconData> floating_action_button_controller;
-  late Rx<double> sound_level_controller;
+  late Rx<IconData> floatingActionButtonController;
+  late Rx<double> soundLevelController;
 
   @override
+  State<MyScaffold> createState() => _MyScaffold();
+}
+
+class _MyScaffold extends State<MyScaffold> {
+  @override
   Widget build(BuildContext context) {
-    appBar_actions?.add(const SizedBox.square(dimension: 10));
+    widget.appBarActions?.add(const SizedBox.square(dimension: 10));
 
     return Scaffold(
-        body: body,
+        body: widget.body,
         appBar: AppBar(
-          title: title,
-          actions: appBar_actions,
+          title: widget.title,
+          bottom: widget.appBarBottom,
+          actions: widget.appBarActions,
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            onTap_floatingActionButton();
-          },
-          elevation: 0,
-          child: Obx(() => Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(100),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                      color: theme_data.primaryColorDark,
-                      spreadRadius: sound_level_controller.value,
-                      blurRadius: sound_level_controller.value),
-                ],
-              ),
-              child: CircleAvatar(
-                  radius: 30,
-                  child: Icon(
-                    floating_action_button_controller.value,
-                  )))),
+        floatingActionButton: SpeedDial(
+          children: widget.speedDialChildren,
+          icon: widget.floatingActionButtonController.value,
+          activeIcon: Icons.close,
+          spacing: 3,
+          childPadding: const EdgeInsets.all(5),
+          spaceBetweenChildren: 4,
+          direction: SpeedDialDirection.up,
+          switchLabelPosition: false,
+
+          /// If true user is forced to close dial manually
+          closeManually: false,
+
+          /// If false, backgroundOverlay will not be rendered.
+          renderOverlay: false,
+          // overlayColor: Colors.black,
+          // overlayOpacity: 0.5,
+          onOpen: widget.onOpenFloatingActionButton,
+          onClose: widget.onCloseFloatingActionButton,
+          useRotationAnimation: true,
+          heroTag: 'speed-dial-hero-tag',
+          // foregroundColor: Colors.black,
+          // backgroundColor: Colors.white,
+          // activeForegroundColor: Colors.red,
+          // activeBackgroundColor: Colors.blue,
+          elevation: 8.0,
+          animationCurve: Curves.elasticInOut,
+          isOpenOnStart: false,
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat);
+        floatingActionButtonLocation: widget.fABLocation,
+        bottomNavigationBar: BottomAppBar(
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 8.0,
+          child: Row(
+              mainAxisAlignment: widget.fABLocation ==
+                      FloatingActionButtonLocation.startDocked
+                  ? MainAxisAlignment.end
+                  : widget.fABLocation == FloatingActionButtonLocation.endDocked
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: widget.bottomNavigationBarChildren),
+        ));
   }
 }

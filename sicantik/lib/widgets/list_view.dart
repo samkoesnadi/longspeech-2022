@@ -5,11 +5,11 @@ import 'package:sicantik/widgets/scrollbar.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 
-BoxScrollView generate_list_view(
+BoxScrollView generateListView(
     {required ScrollController scrollController,
-    required List<CardData> card_data_list}) {
+    required List<CardData> cardData}) {
   // divider for the card
-  const card_divider = Divider(
+  const cardDivider = Divider(
     thickness: 5,
     indent: 5,
     endIndent: 5,
@@ -19,10 +19,10 @@ BoxScrollView generate_list_view(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 16),
       physics: const BouncingScrollPhysics(),
       scrollDirection: Axis.vertical,
-      itemCount: card_data_list.length,
+      itemCount: cardData.length,
       itemBuilder: (BuildContext context, int index) {
-        String headline = card_data_list[index].title;
-        String description = card_data_list[index].description;
+        String headline = cardData[index].title;
+        String description = cardData[index].description;
 
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
@@ -63,9 +63,9 @@ BoxScrollView generate_list_view(
                   children: [
                     // the title
                     Row(children: <Widget>[
-                      const Expanded(child: card_divider),
+                      const Expanded(child: cardDivider),
                       Text(headline, textScaleFactor: 1.5),
-                      const Expanded(child: card_divider),
+                      const Expanded(child: cardDivider),
                     ]),
                     // the description
                     Text(description)

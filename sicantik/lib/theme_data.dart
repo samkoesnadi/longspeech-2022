@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 const String fontName = 'Roboto';
 
-final theme_data = ThemeData(
+final themeData = ThemeData(
     primarySwatch: Colors.blue,
     brightness: Brightness.light,
     scaffoldBackgroundColor: const Color.fromRGBO(239, 238, 239, 1.0),

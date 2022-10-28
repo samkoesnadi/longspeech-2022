@@ -13,6 +13,9 @@ void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init("notes");
 
+  // 1. Initiate all defaults
+  GetStorage("notes").write("default", "[]");
+
   VisibilityDetectorController.instance.updateInterval =
       const Duration(milliseconds: 5);
 
@@ -36,7 +39,7 @@ class MyApp extends StatelessWidget {
     ));
 
     return GetMaterialApp(
-      theme: theme_data,
+      theme: themeData,
       translations: Messages(),
       // your translations
       locale: const Locale('en', 'US'),

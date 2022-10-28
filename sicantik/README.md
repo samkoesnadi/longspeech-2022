@@ -3,5 +3,6 @@
 ## Data structure
 
 * Notes box
-  * datetime : list of all uuids
-  * {datetime} : {full_text, summarized}
+  * noteIds : list of all noteId
+  * {noteId} : {editedAt, title, fullText, summarized}
+  * default

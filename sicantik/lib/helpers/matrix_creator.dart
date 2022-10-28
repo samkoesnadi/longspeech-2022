@@ -4,7 +4,6 @@ import 'package:document_analysis/src/vector_measurement.dart';
 import 'package:sicantik/helpers/tokenizer.dart';
 
 ///Create word-vector matrix using Hybrid TF-IDF metric
-///
 List<List<double?>> myHybridTfIdfMatrix(List<String> documentList,
     {measureFunction = cosineDistance,
     String Function(String)? stemmer,

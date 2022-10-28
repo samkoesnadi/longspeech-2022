@@ -1,28 +1,74 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:appcheck/appcheck.dart';
-import 'package:get/utils.dart';
+import 'package:sicantik/utils.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+// class SpeechToTextDummy {
+//   String text;
+//   int period;
+//   late Timer _timer;
+//
+//   SpeechToTextDummy({this.text = "hello", this.period = 2});
+//
+//   Future listen(
+//       {SpeechResultListener? onResult,
+//       Duration? listenFor,
+//       Duration? pauseFor,
+//       String? localeId,
+//       SpeechSoundLevelChange? onSoundLevelChange,
+//       cancelOnError = false,
+//       partialResults = true,
+//       onDevice = false,
+//       ListenMode listenMode = ListenMode.confirmation,
+//       sampleRate = 0}) async {
+//     _timer =
+//         Timer.periodic(Duration(seconds: period), (Timer t) => print('hi!'));
+//   }
+//
+//   void stop() {
+//     _timer.cancel();
+//   }
+//
+//   Future<bool> initialize(
+//       {SpeechErrorListener? onError,
+//         SpeechStatusListener? onStatus,
+//         debugLogging = false,
+//         Duration? finalTimeout,
+//         List<dynamic>? options}) async {
+//       return true;
+//   }
+//
+//   // Future<List<LocaleName>> locales() async {
+//   //   return
+//   // }
+//
+//   Future<LocaleName?> systemLocale() async {
+//
+//   }
+// }
+
 class SpeechToTextHandler {
-  static const int MIN_SENTENCE_WORDS = 2;
-  static const int _PAUSE_FOR = 30;
-  static const int _LISTEN_FOR = 30;
+  static const int minSentenceWords = 2;
+  static const int pauseFor = 30;
+  static const int listenFor = 30;
 
-  late SpeechToText _speech;
-  Function(double level) soundLevelListener;
-  Function(String partial_text) partialResultListener;
-  Function(String full_text) fullResultListener;
-  Function(String error_text) errorListener;
+  Function(double) soundLevelListener;
+  Function(String) partialResultListener;
+  Function(String) fullResultListener;
+  Function(String) errorListener;
 
-  bool _hasSpeech = false;
-  bool _listen_loop = false;
-  String _currentLocaleId = '';
-  String full_text = "";
-  int last_text_count = 0;
-  List<LocaleName> _localeNames = [];
+  bool _listenLoop = false;
+
+  static final SpeechToText _speech = SpeechToText();
+  static String currentLocaleId = '';
+  static String fullText = "";
+  static List<LocaleName> localeNames = [];
+
+  int lastTextCount = 0;
 
   SpeechToTextHandler(
       {required this.soundLevelListener,
@@ -30,24 +76,16 @@ class SpeechToTextHandler {
       required this.fullResultListener,
       required this.errorListener});
 
-  List<LocaleName> get localNames => _localeNames;
-
-  bool get hasSpeech => _hasSpeech;
-
-  String get currentLocaleId => _currentLocaleId;
-
-  set currentLocaleId(String val) {
-    _currentLocaleId = val;
-  }
+  List<LocaleName> get localNames => localeNames;
 
   void _soundLevelListener(double level) {
-    this.soundLevelListener(level);
+    soundLevelListener(level);
   }
 
   Future<void> _listen() async {
-    bool _available = await initSpeechState();
+    bool available = await initSpeechState();
 
-    if (!_available) {
+    if (!available) {
       errorListener("Speech recognizer cannot be initiated");
     }
 
@@ -57,10 +95,10 @@ class SpeechToTextHandler {
     // on some devices.
     await _speech.listen(
         onResult: resultListener,
-        listenFor: const Duration(seconds: _LISTEN_FOR),
-        pauseFor: const Duration(seconds: _PAUSE_FOR),
+        listenFor: const Duration(seconds: listenFor),
+        pauseFor: const Duration(seconds: pauseFor),
         partialResults: true,
-        localeId: _currentLocaleId,
+        localeId: currentLocaleId,
         onSoundLevelChange: _soundLevelListener,
         cancelOnError: false,
         listenMode: ListenMode.dictation);
@@ -73,63 +111,62 @@ class SpeechToTextHandler {
       partialResultListener(result.recognizedWords);
 
       if (result.finalResult) {
-        store_sentence(result.recognizedWords);
-        fullResultListener(full_text);
+        storeSentence(result.recognizedWords);
+        fullResultListener(fullText);
       }
     }
   }
 
   void stopListening() {
-    _listen_loop = false;
+    _listenLoop = false;
     _speech.stop();
+  }
+
+  Future<bool> initSpeechState() {
+    return preInitSpeechState(
+        errorListener: _errorListener, statusListener: _statusListener);
   }
 
   /// This initializes SpeechToText. That only has to be done
   /// once per application, though calling it again is harmless
   /// it also does nothing. The UX of the sample app ensures that
   /// it can only be called once.
-  Future<bool> initSpeechState() async {
+  static Future<bool> preInitSpeechState(
+      {SpeechErrorListener? errorListener,
+      SpeechStatusListener? statusListener}) async {
     bool ready = true;
-    if (Platform.isAndroid) {
-      // needs google app to run the speech recognition
-      ready &= await check_google_app();
-    }
-
-    if (!ready) return false;
 
     try {
-      _speech = SpeechToText();
       var hasSpeech = await _speech.initialize(
-        onError: _errorListener,
-        onStatus: _statusListener,
+        onError: errorListener,
+        onStatus: statusListener,
         debugLogging: true,
         options: [SpeechToText.androidIntentLookup],
       );
-      if (hasSpeech && _localeNames.isEmpty) {
+      if (hasSpeech && localeNames.isEmpty) {
         // Get the list of languages installed on the supporting platform so they
         // can be displayed in the UI for selection by the user.
-        _localeNames = await _speech.locales();
-
+        localeNames = await _speech.locales();
         var systemLocale = await _speech.systemLocale();
-        _currentLocaleId = systemLocale?.localeId ?? '';
+
+        currentLocaleId = systemLocale?.localeId ?? '';
       }
-      _hasSpeech = hasSpeech;
+      ready = hasSpeech;
     } catch (e) {
-      _hasSpeech = false;
+      logger.e(e);
+      ready = false;
     }
 
-    return _hasSpeech;
+    return ready;
   }
 
   void _errorListener(SpeechRecognitionError error) {
-    if (
-      error.errorMsg == "error_speech_timeout"
-      || error.errorMsg == "error_no_match"
-      || error.errorMsg == "error_busy"
-    ) {
+    if (error.errorMsg == "error_speech_timeout" ||
+        error.errorMsg == "error_no_match" ||
+        error.errorMsg == "error_busy") {
       return;
     } else {
-      _listen_loop = false;
+      _listenLoop = false;
     }
 
     errorListener(error.errorMsg);
@@ -137,40 +174,31 @@ class SpeechToTextHandler {
 
   Future _statusListener(String status) async {
     if (status == "done") {
-      if (_listen_loop) {
+      if (_listenLoop) {
         await _listen();
       }
     }
   }
 
   void listen() {
-    _listen_loop = true;
+    _listenLoop = true;
     _listen();
   }
 
-  void store_sentence(String sentence) {
-    int sentence_length = sentence.split(" ").length;
-    if (full_text.isEmpty) {
-      full_text = sentence;
-      last_text_count = sentence_length;
+  void storeSentence(String sentence) {
+    int sentenceLength = sentence.split(" ").length;
+    if (fullText.isEmpty) {
+      fullText = sentence;
+      lastTextCount = sentenceLength;
     } else {
       String separator = ".";
-      if (last_text_count <= MIN_SENTENCE_WORDS) {
+      if (lastTextCount <= minSentenceWords) {
         separator = ",";
-        last_text_count += sentence_length;
+        lastTextCount += sentenceLength;
       } else {
-        last_text_count = sentence_length;
+        lastTextCount = sentenceLength;
       }
-      full_text = "$full_text$separator $sentence";
+      fullText = "$fullText$separator $sentence";
     }
   }
-}
-
-Future<bool> check_google_app() async {
-  const package = "com.google.android.googlequicksearchbox";
-  bool _enabled = false;
-  await AppCheck.isAppEnabled(package).then(
-    (enabled) => _enabled = enabled,
-  );
-  return _enabled;
 }
