@@ -5,7 +5,7 @@ import 'package:sicantik/utils.dart';
 
 const String visibleHeadlinesKey = "visibleHeadlines";
 
-Widget scrollbar_wrapper(
+Widget scrollbarWrapper(
     {required Widget child,
     required ScrollController scrollController,
     required List<CardData> cardData,

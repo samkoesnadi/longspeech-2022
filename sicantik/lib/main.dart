@@ -13,9 +13,6 @@ void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
 
-  // 1. Initiate all defaults
-  GetStorage("notes").write("default", "[]");
-
   VisibilityDetectorController.instance.updateInterval =
       const Duration(milliseconds: 5);
 

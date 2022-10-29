@@ -4,19 +4,8 @@ import 'package:scidart/numdart.dart';
 import 'package:sicantik/helpers/matrix_creator.dart';
 import 'package:stemmer/stemmer.dart';
 
-class Sentence {
-  String sentence;
-  bool summarized;
 
-  Sentence(this.sentence, this.summarized);
-
-  @override
-  String toString() {
-    return '{ ${this.sentence}, ${this.summarized} }';
-  }
-}
-
-List<Sentence> summarize({required String paragraph, int amountOfSentences = 10}) {
+String summarize({required String paragraph, int amountOfSentences = 10}) {
   PorterStemmer stemmer = PorterStemmer();
 
   List<String> docs = split_into_sentences(paragraph);
@@ -48,12 +37,20 @@ List<Sentence> summarize({required String paragraph, int amountOfSentences = 10}
     thresholdProbability = sortedRanks[amountOfSentences - 1];
   }
 
-  List<Sentence> sentences = [];
+  String summarized = "";
   for (int i = 0; i < docs.length; i++) {
-    sentences.add(Sentence(docs[i], thresholdProbability <= ranks[i]));
+    if (thresholdProbability <= ranks[i]) {
+      docs[i] = docs[i].trim();
+
+      if (docs[i][docs[i].length - 1] == '.') {
+        docs[i] = docs[i].substring(0, docs[i].length).trim();
+      }
+
+      summarized += ' ${docs[i]}.';
+    }
   }
 
-  return sentences;
+  return summarized;
 }
 
 List<String> split_into_sentences(String text) {

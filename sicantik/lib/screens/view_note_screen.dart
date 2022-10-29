@@ -7,6 +7,9 @@ import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:sicantik/screens/new_note_screen.dart';
+import 'package:sicantik/utils.dart';
+import 'package:sicantik/widgets/list_view.dart';
 import 'package:sicantik/widgets/scaffold.dart';
 
 class ViewNoteScreen extends StatefulWidget {
@@ -20,22 +23,15 @@ class _ViewNoteScreenState extends State<ViewNoteScreen> {
   late QuillController _quillController;
   final FocusNode _focusNode = FocusNode();
   final noteStorage = GetStorage("notes");
-  late String title;
+  late String noteId;
 
   @override
   void initState() {
     Map<String, dynamic> arguments = Get.arguments;
 
-    title = "untitled".tr;
-    if (arguments.containsKey("title")) {
-      title = arguments["title"];
-    }
-
-    String noteId = "default";
-    if (arguments.containsKey("noteId")) {
-      noteId = arguments["noteId"];
-    }
-    final noteJson = noteStorage.read(noteId);
+    // IMPORTANT! noteId has to be defined
+    noteId = arguments["noteId"];
+    final noteJson = noteStorage.read("$noteId-full");
     final doc = Document.fromJson(jsonDecode(noteJson));
     _quillController = QuillController(
         document: doc, selection: const TextSelection.collapsed(offset: 0));
@@ -55,28 +51,52 @@ class _ViewNoteScreenState extends State<ViewNoteScreen> {
       embedBuilders: FlutterQuillEmbeds.builders(),
     );
 
+    List<CardData> aiAnalysisCardData = [];
+    aiAnalysisCardData.add(CardData(
+        title: "Summary", description: noteStorage.read(noteId)["summarized"]));
+    aiAnalysisCardData.add(CardData(title: "Detected languages",
+        description: noteStorage.read("$noteId-detectedLanguages").join(", ")));
+    aiAnalysisCardData.add(CardData(title: "Detected entities",
+        description: noteStorage.read("$noteId-ners").join(", ")));
+
     return MyScaffold(
-        body: TabBarView(children: [
-          // view
-          Padding(
+      floatingActionButtonIcon: Icons.edit,
+      speedDialOnPress: () async {
+        // set the arguments
+        final dynamic arguments = {"noteId": noteId};
+
+        await Get.to(() => const NewNoteScreen(), arguments: arguments);
+      },
+      body: TabBarView(children: [
+        // view
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: quillEditor,
+          ),
+        ),
+        // AI-assist
+        Padding(
             padding: const EdgeInsets.all(8),
             child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: quillEditor,
-            ),
-          ),
-          // AI-assist
-          Container()
-        ]),
-        title: Text(title),
-        appBarBottom: TabBar(
-          tabs: [
-            Tab(text: "viewNote".tr),
-            Tab(text: "AINote".tr),
-          ],
-        ));
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    shrinkWrap: true,
+                    itemCount: aiAnalysisCardData.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Column(children: [
+                        Text(aiAnalysisCardData[index].title),
+                        Text(aiAnalysisCardData[index].description)
+                      ]);
+                    })))
+      ]),
+      title: noteStorage.read(noteId)["title"],);
   }
-}

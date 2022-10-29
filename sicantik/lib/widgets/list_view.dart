@@ -1,9 +1,9 @@
+import 'package:favorite_button/favorite_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:sicantik/utils.dart';
 import 'package:sicantik/widgets/scrollbar.dart';
 import 'package:visibility_detector/visibility_detector.dart';
-
 
 BoxScrollView generateListView(
     {required ScrollController scrollController,
@@ -23,6 +23,17 @@ BoxScrollView generateListView(
       itemBuilder: (BuildContext context, int index) {
         String headline = cardData[index].title;
         String description = cardData[index].description;
+
+        List<Widget> titleRowContent = <Widget>[
+          const Expanded(child: cardDivider),
+          Text(headline, textScaleFactor: 1.5),
+          const Expanded(child: cardDivider)
+        ];
+        if (cardData[index].isStarred != null) {
+          titleRowContent.add(StarButton(
+              valueChanged: () {}, isStarred: cardData[index].isStarred));
+        }
+        Widget titleWidget = Row(children: titleRowContent);
 
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
@@ -46,27 +57,21 @@ BoxScrollView generateListView(
               // onVisibilityGained(headline);
               Set<dynamic> visibleHeadlines = {};
               if (box.hasData(visibleHeadlinesKey)) {
-                visibleHeadlines = {
-                  ...box.read(visibleHeadlinesKey)
-                };
+                visibleHeadlines = {...box.read(visibleHeadlinesKey)};
               }
               if (info.visibleFraction == 1.0) {
                 visibleHeadlines.add(index);
               } else {
                 visibleHeadlines.remove(index);
               }
-              box.write(visibleHeadlinesKey, visibleHeadlines.toList());
+              box.writeInMemory(visibleHeadlinesKey, visibleHeadlines.toList());
             },
             child: Padding(
                 padding: const EdgeInsets.all(3.0),
                 child: Column(
                   children: [
                     // the title
-                    Row(children: <Widget>[
-                      const Expanded(child: cardDivider),
-                      Text(headline, textScaleFactor: 1.5),
-                      const Expanded(child: cardDivider),
-                    ]),
+                    titleWidget,
                     // the description
                     Text(description)
                   ],

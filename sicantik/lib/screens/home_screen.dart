@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:fuzzy/data/result.dart';
 import 'package:fuzzy/fuzzy.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:rflutter_alert/rflutter_alert.dart';
-import 'package:sicantik/helpers/speech_to_text.dart';
-import 'package:sicantik/screens/new_note_speech_to_text_screen.dart';
-import 'package:sicantik/screens/new_note_text_screen.dart';
+import 'package:sicantik/screens/new_note_screen.dart';
 import 'package:sicantik/utils.dart';
 import 'package:sicantik/widgets/list_view.dart';
 import 'package:sicantik/widgets/scaffold.dart';
@@ -19,20 +16,41 @@ class HomeScreen extends StatefulWidget {
   State<StatefulWidget> createState() => HomeScreenState();
 }
 
+Set<int> search(List<String> input, String searchKey) {
+  Fuzzy fuse = Fuzzy(input);
+  List<Result<dynamic>> result = fuse.search(searchKey);
+
+  Set<int> searchResult = {};
+  for (Result<dynamic> item in result) {
+    for (ResultDetails<dynamic> resultDetail in item.matches) {
+      searchResult.add(resultDetail.arrayIndex);
+    }
+  }
+
+  return searchResult;
+}
+
 class HomeScreenState extends State<HomeScreen> {
   final ScrollController scrollController = ScrollController();
   final TextEditingController _searchTextController =
       TextEditingController(text: "");
-  RxString title_text = "title".tr.obs;
+  String titleText = "title".tr;
   final noteStorage = GetStorage("notes");
+  List<CardData> fullCardData = [];
+  RxList cardDataObx = [].obs;
 
   @override
   void initState() {
-    _searchTextController.addListener(() {
-      if (_searchTextController.text == "") {
-        title_text.value = "title".tr;
-      } else {
-        title_text.value = _searchTextController.text;
+    _searchTextController.addListener(() async {
+      if (_searchTextController.text != "") {
+        List<String> allTitle = fullCardData.map((e) => e.title).toList();
+        List<String> allDescription =
+            fullCardData.map((e) => e.description).toList();
+
+        Set<int> searchResult = search(allTitle, _searchTextController.text);
+        searchResult.addAll(search(allDescription, _searchTextController.text));
+
+        cardDataObx.value = searchResult.map((e) => fullCardData[e]).toList();
       }
     });
   }
@@ -40,23 +58,29 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     List<String>? noteIds = noteStorage.read("noteIds");
+    List<String> allStarred = noteStorage.read("starred") ?? [];
 
     Widget scaffoldBody;
     if (noteIds == null) {
       scaffoldBody = const SizedBox.shrink();
     } else {
-      List<CardData> cardData = [];
       for (String noteId in noteIds) {
         Map<String, dynamic> note = noteStorage.read(noteId);
-        cardData
-            .add(CardData(title: note["title"], description: note["summarized"]));
+        fullCardData.add(CardData(
+            title: note["title"],
+            description: note["summarized"],
+            isStarred: allStarred.contains(noteId)));
+        cardDataObx.value = fullCardData;
       }
 
-      scaffoldBody = scrollbar_wrapper(
-          child: generateListView(
-              scrollController: scrollController, cardData: cardData),
-          scrollController: scrollController,
-          cardData: cardData);
+      scaffoldBody = Obx(() {
+        List<CardData> cardData = cardDataObx.value.cast<CardData>();
+        return scrollbarWrapper(
+            child: generateListView(
+                scrollController: scrollController, cardData: cardData),
+            scrollController: scrollController,
+            cardData: cardData);
+      });
     }
 
     // get the cardData
@@ -64,78 +88,17 @@ class HomeScreenState extends State<HomeScreen> {
     return MyScaffold(
       body: scaffoldBody,
       title: Obx(() => Text(
-            title_text.value,
+            titleText,
             overflow: TextOverflow.fade,
           )),
-      onOpenFloatingActionButton: () async {
-        final fuse = Fuzzy(['apple', 'banana', 'orange']);
-        final result = fuse.search('ran');
-        result.map((r) => r.item).forEach(print);
+      floatingActionButtonIcon: Icons.add,
+      speedDialOnPress: () async {
+        await Get.to(() => const NewNoteScreen());
       },
-      speedDialChildren: [
-        SpeedDialChild(
-          child: const Icon(Icons.note_add),
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          label: 'Text note',
-          onTap: () async {
-            await Get.to(() => const NewNoteTextScreen());
-          },
-        ),
-        SpeedDialChild(
-          child: const Icon(Icons.mic_none_rounded),
-          backgroundColor: Colors.red,
-          foregroundColor: Colors.white,
-          label: 'Text-to-speech note',
-          onTap: () async {
-            if (!await SpeechToTextHandler.preInitSpeechState()) {
-              Alert(context: context, type: AlertType.error, title: "No speech")
-                  .show();
-            } else {
-              Alert(
-                context: context,
-                content: Flex(
-                  direction: Axis.vertical,
-                  children: [
-                    const Text('Language:'),
-                    DropdownButton<String>(
-                      isExpanded: true,
-                      onChanged: (selectedVal) {
-                        if (selectedVal != null) {
-                          SpeechToTextHandler.currentLocaleId = selectedVal;
-                        }
-                      },
-                      value: SpeechToTextHandler.currentLocaleId,
-                      items: SpeechToTextHandler.localeNames
-                          .map(
-                            (localeName) => DropdownMenuItem(
-                              value: localeName.localeId,
-                              child: Text(localeName.name,
-                                  overflow: TextOverflow.ellipsis),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-                ),
-                buttons: [
-                  DialogButton(
-                    child: const Text("OK"),
-                    onPressed: () async {
-                      await Get.to(() => NewNoteSpeechToTextScreen());
-                      Get.back();
-                    },
-                  )
-                ],
-              ).show();
-            }
-          },
-        )
-      ],
       bottomNavigationBarChildren: [
         Expanded(
             child: ListTile(
-          leading: Icon(Icons.search),
+          leading: const Icon(Icons.search),
           title: TextField(
               maxLength: 20,
               controller: _searchTextController,

@@ -41,10 +41,6 @@ dependencies:
   get_storage: ^2.0.3
   visibility_detector: ^0.3.3
   google_fonts: ^3.0.1
-  tflite_flutter_helper:
-    git:
-      url: https://github.com/filofan1/tflite_flutter_helper.git
-      ref: 783f15e5a87126159147d8ea30b98eea9207ac70
   scidart: ^0.0.2-dev.9
   stemmer: ^2.2.0
   document_analysis: ^0.2.0
@@ -62,6 +58,9 @@ dependencies:
   path_provider: ^2.0.9
   filesystem_picker: ^2.0.0
   file_picker: ^4.6.1
+  fluttertoast: ^8.1.1
+  google_mlkit_entity_extraction: ^0.5.0
+  google_mlkit_language_id: ^0.4.0
 
 dev_dependencies:
   flutter_test:

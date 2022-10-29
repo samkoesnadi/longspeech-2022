@@ -3,80 +3,223 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:favorite_button/favorite_button.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:google_mlkit_entity_extraction/google_mlkit_entity_extraction.dart';
+import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:sicantik/helpers/summarize.dart';
+import 'package:sicantik/screens/view_note_screen.dart';
 import 'package:sicantik/widgets/scaffold.dart';
 import 'package:tuple/tuple.dart';
+import 'package:uuid/uuid.dart';
 
+Map entityExtractionLanguageMap = {
+  "en": EntityExtractorLanguage.english,
+  "zh": EntityExtractorLanguage.chinese,
+  "ar": EntityExtractorLanguage.arabic,
+  "nl": EntityExtractorLanguage.dutch,
+  "fr": EntityExtractorLanguage.french,
+  "de": EntityExtractorLanguage.german,
+  "it": EntityExtractorLanguage.italian,
+  "ja": EntityExtractorLanguage.japanese,
+  "ko": EntityExtractorLanguage.korean,
+  "pl": EntityExtractorLanguage.polish,
+  "pt": EntityExtractorLanguage.portuguese,
+  "ru": EntityExtractorLanguage.russian,
+  "es": EntityExtractorLanguage.spanish,
+  "th": EntityExtractorLanguage.thai,
+  "tr": EntityExtractorLanguage.turkish
+};
 
-class NoteScreen extends StatefulWidget {
-  const NoteScreen({Key? key}) : super(key: key);
+class NewNoteScreen extends StatefulWidget {
+  const NewNoteScreen({Key? key}) : super(key: key);
 
   @override
-  State<NoteScreen> createState() => _NoteScreenState();
+  State<NewNoteScreen> createState() => _NewNoteScreenState();
 }
 
-class _NoteScreenState extends State<NoteScreen> {
+class _NewNoteScreenState extends State<NewNoteScreen> {
   late QuillController _quillController;
   late TextEditingController _titleController;
   final FocusNode _focusNode = FocusNode();
   final noteStorage = GetStorage("notes");
+  late String noteId;
+
+  final _entityExtractorModelManager = EntityExtractorModelManager();
 
   @override
   void initState() {
-    Map<String, dynamic> arguments = Get.arguments;
+    Map<String, dynamic>? arguments = Get.arguments;
 
     String title = "untitled".tr;
-    if (arguments.containsKey("title")) {
-      title = arguments["title"];
-    }
-    _titleController = TextEditingController(text: title);
+    Document doc = Document();
 
-    String noteId = "default";
-    if (arguments.containsKey("noteId")) {
-      noteId = arguments["noteId"];
+    if (arguments != null) {
+      if (arguments.containsKey("noteId")) {
+        noteId = arguments["noteId"];
+        final noteJson = noteStorage.read("$noteId-full");
+        doc = Document.fromJson(jsonDecode(noteJson));
+        title = noteStorage.read(noteId)["title"];
+      }
+    } else {
+      noteId = const Uuid().v4();
     }
-    final noteJson = noteStorage.read(noteId);
-    final doc = Document.fromJson(jsonDecode(noteJson));
+
+    _titleController = TextEditingController(text: title);
     _quillController = QuillController(
         document: doc, selection: const TextSelection.collapsed(offset: 0));
+
+    _titleController.addListener(() {
+      Map<String, String> noteMetadata = noteStorage.read(noteId);
+      noteMetadata["title"] = _titleController.text;
+      noteStorage.write(noteId, noteMetadata);
+    });
+  }
+
+  void saveDocument() async {
+    // Update full text
+    var json = jsonEncode(_quillController.document.toDelta().toJson());
+    noteStorage.write("$noteId-full", json);
+
+    // Update AI analysis and metadata
+    String plainText = _quillController.document.toPlainText();
+    String summarized = summarize(paragraph: plainText);
+
+    //// Identify text language
+    final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.5);
+    final List<IdentifiedLanguage> possibleLanguages =
+        await languageIdentifier.identifyPossibleLanguages(plainText);
+    List<String> detectedLanguages = [];
+    for (IdentifiedLanguage possibleLanguage in possibleLanguages) {
+      detectedLanguages.add(possibleLanguage.languageTag);
+    }
+    languageIdentifier.close();
+
+    //// Identify ner
+    List<String> entities = [];
+    for (String detectedLanguage in detectedLanguages) {
+      if (entityExtractionLanguageMap.containsKey(detectedLanguage)) {
+        EntityExtractorLanguage entityExtractorLanguage =
+            entityExtractionLanguageMap[detectedLanguage];
+
+        final entityExtractor =
+            EntityExtractor(language: entityExtractorLanguage);
+
+        _entityExtractorModelManager
+            .isModelDownloaded(entityExtractorLanguage.name)
+            .then((value) => Fluttertoast.showToast(
+                msg:
+                    "Connect to internet if you want proper entity extraction result"));
+
+        final List<EntityAnnotation> annotations =
+            await entityExtractor.annotateText(plainText);
+
+        for (final annotation in annotations) {
+          // Only take the first entity type for simplicity
+          entities
+              .add("${annotation.entities[0].type.name}: ${annotation.text}");
+        }
+        entityExtractor.close();
+      }
+    }
+
+    Map<String, String> noteMetadata = noteStorage.read(noteId) ?? {};
+    noteMetadata["title"] = _titleController.text;
+    noteMetadata["editedAt"] = DateTime.now().toString();
+    noteMetadata["summarized"] = summarized;
+    noteStorage.write(noteId, noteMetadata);
+    noteStorage.write("$noteId-ners", entities);
+    noteStorage.write("$noteId-detectedLanguages", detectedLanguages);
   }
 
   @override
   Widget build(BuildContext context) {
+    // check if starred or not
+    List<String> allStarred = noteStorage.read("starred") ?? [];
+
     return MyScaffold(
-        body: RawKeyboardListener(
-          focusNode: FocusNode(),
-          onKey: (event) {
-            if (event.data.isControlPressed && event.character == 'b') {
-              if (_quillController
-                  .getSelectionStyle()
-                  .attributes
-                  .keys
-                  .contains('bold')) {
-                _quillController
-                    .formatSelection(Attribute.clone(Attribute.bold, null));
-              } else {
-                _quillController.formatSelection(Attribute.bold);
-              }
-            }
-          },
-          child: _buildEditor(context),
-        ),
+        body: Column(children: [
+          // TODO: Reminder
+          Container(),
+          Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: RawKeyboardListener(
+                focusNode: FocusNode(),
+                onKey: (event) {
+                  if (event.data.isControlPressed && event.character == 'b') {
+                    if (_quillController
+                        .getSelectionStyle()
+                        .attributes
+                        .keys
+                        .contains('bold')) {
+                      _quillController.formatSelection(
+                          Attribute.clone(Attribute.bold, null));
+                    } else {
+                      _quillController.formatSelection(Attribute.bold);
+                    }
+                  }
+                },
+                child: _buildEditor(context),
+              ))
+        ]),
         title: TextField(
           controller: _titleController,
+          decoration:
+              const InputDecoration(filled: true, fillColor: Color(0x00ffffff)),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () async {
+            Alert(
+              context: context,
+              buttons: [
+                DialogButton(child: const Text("Cancel"), onPressed: () => Get.back()),
+                DialogButton(child: const Text("Discard"), onPressed: () {
+                  Get.back();
+                  Get.back();  // get to the previous screen
+                }),
+                DialogButton(child: const Text("Save"), onPressed: () {
+                  saveDocument();
+                  Get.off(() => const ViewNoteScreen(), arguments: {
+                    "noteId": noteId
+                  });
+                })
+              ]
+            ).show();
+          },
         ),
         appBarActions: [
           IconButton(
             onPressed: () => _addEditNote(context),
-            icon: const Icon(Icons.note_add),
-          )
+            icon: const Icon(Icons.speaker_notes),
+          ),
+          StarButton(isStarred: allStarred.contains(noteId), valueChanged: (isStarred) {
+            Set<String> allStarredSet = allStarred.toSet();
+
+            if (isStarred) {
+              allStarredSet.add(noteId);
+            } else {
+              allStarredSet.remove(noteId);
+            }
+
+            noteStorage.write("starred", allStarredSet.toList());
+          }),
+          IconButton(
+              onPressed: () {
+                saveDocument();
+
+                Fluttertoast.showToast(msg: "The document is saved");
+              },
+              icon: const Icon(Icons.save))
         ]);
   }
 

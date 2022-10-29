@@ -1,7 +1,4 @@
 import 'package:logger/logger.dart';
-import 'package:uuid/uuid.dart';
-
-var uuid = Uuid();
 
 var logger = Logger(
   printer: PrettyPrinter(),
@@ -10,9 +7,11 @@ var logger = Logger(
 class CardData {
   String title;
   String description;
+  bool? isStarred;
 
   CardData({
     required this.title,
-    required this.description
+    required this.description,
+    this.isStarred
   });
 }

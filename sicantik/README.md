@@ -4,5 +4,8 @@
 
 * Notes box
   * noteIds : list of all noteId
-  * {noteId} : {editedAt, title, fullText, summarized}
-  * default
+  * starred : list of all favorites
+  * {noteId} : {editedAt, title, summarized}
+  * {noteId}-full : the full text
+  * {noteId}-ners : list of ner
+  * {noteId}-detectedLanguages : list of detected language
