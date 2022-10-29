@@ -100,3 +100,4 @@ class _ViewNoteScreenState extends State<ViewNoteScreen> {
       ]),
       title: noteStorage.read(noteId)["title"],);
   }
+}
