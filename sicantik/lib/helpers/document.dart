@@ -189,8 +189,9 @@ class MyQuillEditor {
             const Tuple2(16, 0),
             const Tuple2(0, 0),
             null),
-        sizeSmall: const TextStyle(fontSize: 9),
-      )
+        sizeSmall: const TextStyle(fontSize: 9)
+      ),
+      embedBuilders: [...FlutterQuillEmbeds.builders()],
     );
   }
 }

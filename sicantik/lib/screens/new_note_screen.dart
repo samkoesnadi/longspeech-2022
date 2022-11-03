@@ -76,6 +76,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
   @override
   Widget build(BuildContext context) {
     return MyScaffold(
+        resizeToAvoidBottomInset: true,
         backgroundColor: Colors.white,
         body: Column(children: [
           // Reminder

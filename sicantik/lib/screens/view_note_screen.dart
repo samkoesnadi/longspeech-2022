@@ -77,6 +77,7 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
     String description = noteStorage.read(noteId)["summarized"];
 
     return MyScaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       floatingActionButtonIcon: Icons.edit,
       speedDialOnPress: () async {

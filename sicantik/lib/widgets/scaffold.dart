@@ -89,11 +89,33 @@ class _MyScaffold extends State<MyScaffold> {
           padding: const EdgeInsets.all(8), child: floatingActionButton);
     }
 
+    Widget? bottomNavigationBar;
+    if (widget.bottomNavigationBarChildren.isNotEmpty) {
+      bottomNavigationBar = Padding(
+          padding: MediaQuery.of(context).viewInsets,
+          child: BottomAppBar(
+            shape: const CircularNotchedRectangle(),
+            notchMargin: 8.0,
+            child: Row(
+                mainAxisAlignment: widget.fABLocation ==
+                        FloatingActionButtonLocation.startDocked
+                    ? MainAxisAlignment.end
+                    : widget.fABLocation ==
+                            FloatingActionButtonLocation.endDocked
+                        ? MainAxisAlignment.start
+                        : MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                children: widget.bottomNavigationBarChildren),
+          ));
+    }
+
     return Scaffold(
         backgroundColor: widget.backgroundColor,
         resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
         body: widget.body,
         appBar: AppBar(
+          elevation: 0,
+          centerTitle: false,
           leading: widget.leading,
           title: widget.title,
           bottom: widget.appBarBottom,
@@ -101,21 +123,6 @@ class _MyScaffold extends State<MyScaffold> {
         ),
         floatingActionButton: floatingActionButton,
         floatingActionButtonLocation: widget.fABLocation,
-        bottomNavigationBar: Padding(
-            padding: MediaQuery.of(context).viewInsets,
-            child: BottomAppBar(
-              shape: const CircularNotchedRectangle(),
-              notchMargin: 8.0,
-              child: Row(
-                  mainAxisAlignment: widget.fABLocation ==
-                          FloatingActionButtonLocation.startDocked
-                      ? MainAxisAlignment.end
-                      : widget.fABLocation ==
-                              FloatingActionButtonLocation.endDocked
-                          ? MainAxisAlignment.start
-                          : MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: widget.bottomNavigationBarChildren),
-            )));
+        bottomNavigationBar: bottomNavigationBar);
   }
 }
