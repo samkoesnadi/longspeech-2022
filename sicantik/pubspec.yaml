@@ -64,6 +64,7 @@ dependencies:
   flutter_local_notifications: ^12.0.3
   timezone: ^0.9.0
   flutter_datetime_picker: ^1.5.1
+  flutter_tags: ^1.0.0-nullsafety.1
 
 dev_dependencies:
   flutter_test:

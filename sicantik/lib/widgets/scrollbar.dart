@@ -31,7 +31,7 @@ Widget scrollbarWrapper(
           return Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.9),
+              color: Colors.black.withOpacity(0.9),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Text(

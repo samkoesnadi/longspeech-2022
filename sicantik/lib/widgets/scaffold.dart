@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 class MyScaffold extends StatefulWidget {
   final VoidCallback? speedDialOnPress;
   final IconData? floatingActionButtonIcon;
+  bool? resizeToAvoidBottomInset;
+  Color? backgroundColor;
 
   MyScaffold(
       {Key? key,
@@ -19,7 +21,9 @@ class MyScaffold extends StatefulWidget {
       this.fABLocation = FloatingActionButtonLocation.endDocked,
       this.speedDialChildren = const [],
       this.bottomNavigationBarChildren = const [],
-      this.floatingActionButtonIcon})
+      this.floatingActionButtonIcon,
+      this.backgroundColor,
+      this.resizeToAvoidBottomInset})
       : super(key: key);
 
   /// FloatingActionButtonIcon needs to be filled to have the floating Action Button.
@@ -80,7 +84,14 @@ class _MyScaffold extends State<MyScaffold> {
       );
     }
 
+    if (widget.bottomNavigationBarChildren.isEmpty) {
+      floatingActionButton = Padding(
+          padding: const EdgeInsets.all(8), child: floatingActionButton);
+    }
+
     return Scaffold(
+        backgroundColor: widget.backgroundColor,
+        resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
         body: widget.body,
         appBar: AppBar(
           leading: widget.leading,
@@ -90,18 +101,21 @@ class _MyScaffold extends State<MyScaffold> {
         ),
         floatingActionButton: floatingActionButton,
         floatingActionButtonLocation: widget.fABLocation,
-        bottomNavigationBar: BottomAppBar(
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 8.0,
-          child: Row(
-              mainAxisAlignment: widget.fABLocation ==
-                      FloatingActionButtonLocation.startDocked
-                  ? MainAxisAlignment.end
-                  : widget.fABLocation == FloatingActionButtonLocation.endDocked
-                      ? MainAxisAlignment.start
-                      : MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              children: widget.bottomNavigationBarChildren),
-        ));
+        bottomNavigationBar: Padding(
+            padding: MediaQuery.of(context).viewInsets,
+            child: BottomAppBar(
+              shape: const CircularNotchedRectangle(),
+              notchMargin: 8.0,
+              child: Row(
+                  mainAxisAlignment: widget.fABLocation ==
+                          FloatingActionButtonLocation.startDocked
+                      ? MainAxisAlignment.end
+                      : widget.fABLocation ==
+                              FloatingActionButtonLocation.endDocked
+                          ? MainAxisAlignment.start
+                          : MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: widget.bottomNavigationBarChildren),
+            )));
   }
 }

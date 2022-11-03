@@ -3,11 +3,13 @@ import 'package:fuzzy/data/result.dart';
 import 'package:fuzzy/fuzzy.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:sicantik/helpers/document.dart';
 import 'package:sicantik/screens/new_note_screen.dart';
+import 'package:sicantik/screens/view_note_screen.dart';
 import 'package:sicantik/utils.dart';
 import 'package:sicantik/widgets/list_view.dart';
 import 'package:sicantik/widgets/scaffold.dart';
-import 'package:sicantik/widgets/scrollbar.dart';
+import 'package:sicantik/widgets/star_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -31,7 +33,7 @@ Set<int> search(List<String> input, String searchKey) {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  final ScrollController scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchTextController =
       TextEditingController(text: "");
   String titleText = "title".tr;
@@ -42,7 +44,9 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     _searchTextController.addListener(() async {
-      if (_searchTextController.text != "") {
+      if (_searchTextController.text == "") {
+        cardDataObx.value = fullCardData;
+      } else {
         List<String> allTitle = fullCardData.map((e) => e.title).toList();
         List<String> allDescription =
             fullCardData.map((e) => e.description).toList();
@@ -57,40 +61,54 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    List<String>? noteIds = noteStorage.read("noteIds");
-    List<String> allStarred = noteStorage.read("starred") ?? [];
+    List<String> noteIds = noteStorage.read("noteIds")?.cast<String>() ?? [];
+    List<String> allStarred = noteStorage.read("starred")?.cast<String>() ?? [];
 
-    Widget scaffoldBody;
-    if (noteIds == null) {
-      scaffoldBody = const SizedBox.shrink();
-    } else {
-      for (String noteId in noteIds) {
-        Map<String, dynamic> note = noteStorage.read(noteId);
-        fullCardData.add(CardData(
-            title: note["title"],
-            description: note["summarized"],
-            isStarred: allStarred.contains(noteId)));
-        cardDataObx.value = fullCardData;
+    fullCardData = [];
+    for (String noteId in noteIds) {
+      Map<String, dynamic> note = noteStorage.read(noteId);
+      List<Widget> trailing = [];
+      trailing.add(StarButton(
+          valueChanged: (isStarred) async {
+            await saveStarred(isStarred, noteId);
+          },
+          isStarred: allStarred.contains(noteId)));
+      trailing.add(IconButton(
+          onPressed: () async {
+            await deleteDocument(noteId);
+            cardDataObx
+                .removeWhere((element) => element.noteId == noteId);
+          },
+          icon: const Icon(Icons.delete)));
+      String summarized = note["summarized"];
+      const summarizedMaxLength = 30;
+
+      if (summarized.length > summarizedMaxLength) {
+        summarized = "${summarized.substring(0, summarizedMaxLength)}...";
       }
-
-      scaffoldBody = Obx(() {
-        List<CardData> cardData = cardDataObx.value.cast<CardData>();
-        return scrollbarWrapper(
-            child: generateListView(
-                scrollController: scrollController, cardData: cardData),
-            scrollController: scrollController,
-            cardData: cardData);
-      });
+      fullCardData.add(CardData(
+          noteId: noteId,
+          title: note["title"],
+          description: summarized,
+          onTap: () async {
+            await Get.to(() => const ViewNoteScreen(),
+                arguments: {"noteId": noteId});
+          },
+          trailing: trailing));
+      cardDataObx.value = fullCardData;
     }
 
     // get the cardData
 
     return MyScaffold(
-      body: scaffoldBody,
-      title: Obx(() => Text(
-            titleText,
-            overflow: TextOverflow.fade,
-          )),
+      resizeToAvoidBottomInset: false,
+      body: Obx(() => generateListView(
+          scrollController: _scrollController,
+          cardData: cardDataObx.value.cast<CardData>())),
+      title: Text(
+        titleText,
+        overflow: TextOverflow.fade,
+      ),
       floatingActionButtonIcon: Icons.add,
       speedDialOnPress: () async {
         await Get.to(() => const NewNoteScreen());

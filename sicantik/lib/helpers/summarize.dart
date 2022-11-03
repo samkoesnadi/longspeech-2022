@@ -2,13 +2,19 @@ import 'package:collection/collection.dart';
 import 'package:document_analysis/document_analysis.dart';
 import 'package:scidart/numdart.dart';
 import 'package:sicantik/helpers/matrix_creator.dart';
+import 'package:sicantik/utils.dart';
 import 'package:stemmer/stemmer.dart';
 
-
 String summarize({required String paragraph, int amountOfSentences = 10}) {
-  PorterStemmer stemmer = PorterStemmer();
+  logger.d("Summarize: $paragraph");
 
-  List<String> docs = split_into_sentences(paragraph);
+  List<String> docs = splitIntoSentences(paragraph);
+
+  if (docs.isEmpty) {
+    return "";
+  }
+
+  PorterStemmer stemmer = PorterStemmer();
   TokenizationOutput tokenOut = TokenizationOutput();
   List<List<double?>> tfidf =
       myHybridTfIdfMatrix(docs, stemmer: stemmer.stem, tokenOut: tokenOut);
@@ -21,8 +27,7 @@ String summarize({required String paragraph, int amountOfSentences = 10}) {
   List<double> ranks = [];
   for (var columnVector in matrixTranspose(svd.V())) {
     double rank = 0;
-    for (List<double> sv
-        in IterableZip([svd.singularValues(), columnVector])) {
+    for (List<double> sv in IterableZip([svd.singularValues(), columnVector])) {
       rank += sv[0] * sv[1];
     }
     ranks.add(rank);
@@ -43,7 +48,7 @@ String summarize({required String paragraph, int amountOfSentences = 10}) {
       docs[i] = docs[i].trim();
 
       if (docs[i][docs[i].length - 1] == '.') {
-        docs[i] = docs[i].substring(0, docs[i].length).trim();
+        docs[i] = docs[i].substring(0, docs[i].length - 1).trim();
       }
 
       summarized += ' ${docs[i]}.';
@@ -53,7 +58,7 @@ String summarize({required String paragraph, int amountOfSentences = 10}) {
   return summarized;
 }
 
-List<String> split_into_sentences(String text) {
+List<String> splitIntoSentences(String text) {
   const alphabets = "([A-Za-z])";
   const prefixes = "(Mr|St|Mrs|Ms|Dr)[.]";
   const suffixes = "(Inc|Ltd|Jr|Sr|Co)";
@@ -93,8 +98,10 @@ List<String> split_into_sentences(String text) {
   text = text.replaceAll("?", "?<stop>");
   text = text.replaceAll("!", "!<stop>");
   text = text.replaceAll("<prd>", ".");
+  text += "<stop>";
   List<String> sentences = text.split("<stop>");
   sentences.removeLast();
   sentences = sentences.map((e) => e.trim()).toList();
+  sentences.removeWhere((element) => element == "");
   return sentences;
 }

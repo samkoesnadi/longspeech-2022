@@ -1,4 +1,4 @@
-package com.longspeech.sicantik
+package com.elegantnote.sicantik
 
 import io.flutter.embedding.android.FlutterActivity
 

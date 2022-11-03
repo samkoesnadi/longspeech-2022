@@ -1,8 +1,9 @@
-import 'package:favorite_button/favorite_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:sicantik/helpers/document.dart';
 import 'package:sicantik/utils.dart';
 import 'package:sicantik/widgets/scrollbar.dart';
+import 'package:sicantik/widgets/star_button.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 BoxScrollView generateListView(
@@ -23,60 +24,65 @@ BoxScrollView generateListView(
       itemBuilder: (BuildContext context, int index) {
         String headline = cardData[index].title;
         String description = cardData[index].description;
+        final noteStorage = GetStorage("notes");
 
         List<Widget> titleRowContent = <Widget>[
           const Expanded(child: cardDivider),
           Text(headline, textScaleFactor: 1.5),
           const Expanded(child: cardDivider)
         ];
-        if (cardData[index].isStarred != null) {
-          titleRowContent.add(StarButton(
-              valueChanged: () {}, isStarred: cardData[index].isStarred));
+        if (cardData[index].trailing != null) {
+          titleRowContent.addAll(cardData[index].trailing!);
         }
         Widget titleWidget = Row(children: titleRowContent);
 
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.all(Radius.circular(4.0)),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4.0,
-                offset: Offset(0.0, 4.0),
+        return InkWell(
+            onTap: cardData[index].onTap,
+            child: Container(
+              margin:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4.0,
+                    offset: Offset(0.0, 4.0),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Center(
-              child: VisibilityDetector(
-            key: Key(index.toString()),
-            onVisibilityChanged: (VisibilityInfo info) {
-              GetStorage box = GetStorage();
+              child: Center(
+                  child: VisibilityDetector(
+                key: Key(index.toString()),
+                onVisibilityChanged: (VisibilityInfo info) {
+                  GetStorage box = GetStorage();
 
-              // onVisibilityGained(headline);
-              Set<dynamic> visibleHeadlines = {};
-              if (box.hasData(visibleHeadlinesKey)) {
-                visibleHeadlines = {...box.read(visibleHeadlinesKey)};
-              }
-              if (info.visibleFraction == 1.0) {
-                visibleHeadlines.add(index);
-              } else {
-                visibleHeadlines.remove(index);
-              }
-              box.writeInMemory(visibleHeadlinesKey, visibleHeadlines.toList());
-            },
-            child: Padding(
-                padding: const EdgeInsets.all(3.0),
-                child: Column(
-                  children: [
-                    // the title
-                    titleWidget,
-                    // the description
-                    Text(description)
-                  ],
-                )),
-          )),
-        );
+                  // onVisibilityGained(headline);
+                  Set<dynamic> visibleHeadlines = {};
+                  if (box.hasData(visibleHeadlinesKey)) {
+                    visibleHeadlines = {...box.read(visibleHeadlinesKey)};
+                  }
+                  if (info.visibleFraction > 0.0) {
+                    visibleHeadlines.add(index);
+                  } else {
+                    visibleHeadlines.remove(index);
+                  }
+
+                  box.writeInMemory(
+                      visibleHeadlinesKey, visibleHeadlines.toList());
+                },
+                child: Padding(
+                    padding: const EdgeInsets.all(3.0),
+                    child: Column(
+                      children: [
+                        // the title
+                        titleWidget,
+                        // the description
+                        Text(description)
+                      ],
+                    )),
+              )),
+            ));
       });
 }

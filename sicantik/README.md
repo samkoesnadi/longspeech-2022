@@ -10,7 +10,9 @@
   * {noteId}-ners : list of ner
   * {noteId}-detectedLanguages : list of detected language
   * {noteId}-reminders
+  * currentUntitledId : int
 
 * Reminders
   * lastId
   * {reminderId} : the date
+  * currentFreeId : int
