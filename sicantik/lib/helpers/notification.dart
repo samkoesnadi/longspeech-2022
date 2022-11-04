@@ -24,7 +24,7 @@ Future initLocalNotification() async {
   // initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
   // Only work for Android
   const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+      AndroidInitializationSettings('@mipmap/launcher_icon');
   const InitializationSettings initializationSettings =
       InitializationSettings(android: initializationSettingsAndroid);
 
