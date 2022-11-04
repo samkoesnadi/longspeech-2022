@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:logger/logger.dart';
@@ -6,6 +8,8 @@ var logger = Logger(
   printer: PrettyPrinter(),
 );
 
+DateFormat dateFormat = DateFormat("yyyy-MM-dd HH:mm");
+
 class CardData {
   String title;
   String description;
@@ -13,6 +17,8 @@ class CardData {
   void Function()? onTap;
   String? noteId;
   List<Widget>? trailing;
+  String? editedAt;
+  Widget? child;
 
   CardData({
     required this.title,
@@ -20,7 +26,9 @@ class CardData {
     this.isStarred,
     this.onTap,
     this.noteId,
-    this.trailing
+    this.trailing,
+    this.editedAt,
+    this.child
   });
 }
 

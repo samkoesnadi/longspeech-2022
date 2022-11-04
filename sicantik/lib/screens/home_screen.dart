@@ -69,6 +69,7 @@ class HomeScreenState extends State<HomeScreen> {
       Map<String, dynamic> note = noteStorage.read(noteId);
       List<Widget> trailing = [];
       trailing.add(StarButton(
+          iconColor: Theme.of(context).primaryColor,
           valueChanged: (isStarred) async {
             await saveStarred(isStarred, noteId);
           },
@@ -76,10 +77,9 @@ class HomeScreenState extends State<HomeScreen> {
       trailing.add(IconButton(
           onPressed: () async {
             await deleteDocument(noteId);
-            cardDataObx
-                .removeWhere((element) => element.noteId == noteId);
+            cardDataObx.removeWhere((element) => element.noteId == noteId);
           },
-          icon: const Icon(Icons.delete)));
+          icon: Icon(Icons.delete, color: Theme.of(context).primaryColor)));
       String summarized = note["summarized"];
       const summarizedMaxLength = 30;
 
@@ -94,7 +94,8 @@ class HomeScreenState extends State<HomeScreen> {
             await Get.to(() => const ViewNoteScreen(),
                 arguments: {"noteId": noteId});
           },
-          trailing: trailing));
+          trailing: trailing,
+          editedAt: dateFormat.format(DateTime.parse(note["editedAt"]))));
       cardDataObx.value = fullCardData;
     }
 
@@ -102,9 +103,16 @@ class HomeScreenState extends State<HomeScreen> {
 
     return MyScaffold(
       resizeToAvoidBottomInset: false,
-      body: Obx(() => generateListView(
-          scrollController: _scrollController,
-          cardData: cardDataObx.value.cast<CardData>())),
+      body: Obx(() {
+        List<CardData> cardData = cardDataObx.value.cast<CardData>();
+        if (cardData.isEmpty) {
+          return const Center(child: Text("Add note to begin the journey"));
+        }
+        return generateListView(
+            scrollController: _scrollController,
+            cardData: cardData,
+            cardDividerColor: Theme.of(context).primaryColor);
+      }),
       title: Text(
         titleText,
         overflow: TextOverflow.fade,

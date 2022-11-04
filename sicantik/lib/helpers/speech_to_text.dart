@@ -54,31 +54,25 @@ class SpeechToTextHandler {
   static const int pauseFor = 30;
   static const int listenFor = 30;
 
-  Function(double) soundLevelListener;
-  Function(String) partialResultListener;
-  Function(String) fullResultListener;
+  Function(double)? soundLevelListener;
+  Function(String, String, int) partialResultListener;
   Function(String) errorListener;
 
-  bool _listenLoop = false;
+  bool _listenLoop = true;
 
   static final SpeechToText _speech = SpeechToText();
-  static String currentLocaleId = '';
-  static String fullText = "";
-  static List<LocaleName> localeNames = [];
+  static String currentLocaleId = '';  // this is to be taken outside of class.
+  String fullText = "";  // this is to be taken outside of class.
+  static List<LocaleName> localeNames = [];  // this is to be taken outside of class.
 
   int lastTextCount = 0;
 
   SpeechToTextHandler(
-      {required this.soundLevelListener,
+      {this.soundLevelListener,
       required this.partialResultListener,
-      required this.fullResultListener,
       required this.errorListener});
 
   List<LocaleName> get localNames => localeNames;
-
-  void _soundLevelListener(double level) {
-    soundLevelListener(level);
-  }
 
   Future<void> _listen() async {
     bool available = await initSpeechState();
@@ -97,7 +91,7 @@ class SpeechToTextHandler {
         pauseFor: const Duration(seconds: pauseFor),
         partialResults: true,
         localeId: currentLocaleId,
-        onSoundLevelChange: _soundLevelListener,
+        onSoundLevelChange: soundLevelListener,
         cancelOnError: false,
         listenMode: ListenMode.dictation);
   }
@@ -106,11 +100,11 @@ class SpeechToTextHandler {
   /// available after `listen` is called.
   void resultListener(SpeechRecognitionResult result) {
     if (result.recognizedWords.isNotEmpty) {
-      partialResultListener(result.recognizedWords);
+      partialResultListener(result.recognizedWords, this.fullText, this.lastTextCount);
 
       if (result.finalResult) {
         storeSentence(result.recognizedWords);
-        fullResultListener(fullText);
+        _listen();
       }
     }
   }
@@ -184,6 +178,12 @@ class SpeechToTextHandler {
   }
 
   void storeSentence(String sentence) {
+    final combined = combineSentences(fullText, lastTextCount, sentence);
+    fullText = combined[0];
+    lastTextCount = combined[1];
+  }
+
+  static List<dynamic> combineSentences(String fullText, int lastTextCount, String sentence) {
     int sentenceLength = sentence.split(" ").length;
     if (fullText.isEmpty) {
       fullText = sentence;
@@ -198,5 +198,7 @@ class SpeechToTextHandler {
       }
       fullText = "$fullText$separator $sentence";
     }
+
+    return [fullText, lastTextCount];
   }
 }

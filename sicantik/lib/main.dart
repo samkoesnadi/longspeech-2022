@@ -1,9 +1,14 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:sicantik/helpers/image_labeler.dart';
 import 'package:sicantik/helpers/notification.dart';
 import 'package:sicantik/internationalization.dart';
 import 'package:sicantik/screens/home_screen.dart';
@@ -13,11 +18,14 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+  await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+
   await GetStorage.init();
   await initLocalNotification();
-
-  // GetStorage("notes").erase();
-  // GetStorage("reminders").erase();
+  await initializeImageLabeler();
 
   VisibilityDetectorController.instance.updateInterval =
       const Duration(milliseconds: 5);
@@ -42,6 +50,7 @@ class MyApp extends StatelessWidget {
     ));
 
     return GetMaterialApp(
+      localizationsDelegates: const [LocaleNamesLocalizationsDelegate()],
       theme: themeData,
       translations: Messages(),
       // your translations

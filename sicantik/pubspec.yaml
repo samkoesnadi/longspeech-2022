@@ -65,6 +65,11 @@ dependencies:
   timezone: ^0.9.0
   flutter_datetime_picker: ^1.5.1
   flutter_tags: ^1.0.0-nullsafety.1
+  flutter_localized_locales: ^2.0.3
+  firebase_crashlytics: ^3.0.4
+  firebase_analytics: ^10.0.4
+  google_mlkit_image_labeling: ^0.4.0
+  flutter_launcher_icons: ^0.10.0
 
 dev_dependencies:
   flutter_test:
@@ -91,6 +96,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/
+    - assets/ml/
 
   fonts:
     - family: monospace
@@ -143,3 +149,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21

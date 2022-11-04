@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:sicantik/helpers/document.dart';
 import 'package:sicantik/utils.dart';
 import 'package:sicantik/widgets/scrollbar.dart';
-import 'package:sicantik/widgets/star_button.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 BoxScrollView generateListView(
     {required ScrollController scrollController,
-    required List<CardData> cardData}) {
+    required List<CardData> cardData, Color? cardDividerColor}) {
   // divider for the card
-  const cardDivider = Divider(
-    thickness: 5,
-    indent: 5,
-    endIndent: 5,
-  );
+  final cardDivider =
+      Divider(thickness: 5, indent: 5, endIndent: 5, color: cardDividerColor);
   return ListView.builder(
       controller: scrollController,
       padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 16),
@@ -24,12 +19,13 @@ BoxScrollView generateListView(
       itemBuilder: (BuildContext context, int index) {
         String headline = cardData[index].title;
         String description = cardData[index].description;
-        final noteStorage = GetStorage("notes");
 
         List<Widget> titleRowContent = <Widget>[
-          const Expanded(child: cardDivider),
-          Text(headline, textScaleFactor: 1.5),
-          const Expanded(child: cardDivider)
+          Expanded(child: cardDivider),
+          Text(headline,
+              style:
+                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Expanded(child: cardDivider)
         ];
         if (cardData[index].trailing != null) {
           titleRowContent.addAll(cardData[index].trailing!);
@@ -79,7 +75,13 @@ BoxScrollView generateListView(
                         // the title
                         titleWidget,
                         // the description
-                        Text(description)
+                        Text(
+                          description,
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                        Align(
+                            alignment: Alignment.bottomRight,
+                            child: Text(cardData[index].editedAt!))
                       ],
                     )),
               )),

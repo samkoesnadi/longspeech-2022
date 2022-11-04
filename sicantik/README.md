@@ -10,6 +10,7 @@
   * {noteId}-ners : list of ner
   * {noteId}-detectedLanguages : list of detected language
   * {noteId}-reminders
+  * {noteId}-imageClassifications : dictionary {imagePath: list of classifications}
   * currentUntitledId : int
 
 * Reminders

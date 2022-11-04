@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "455765338373",
+    "project_id": "longspeech-45288",
+    "storage_bucket": "longspeech-45288.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:455765338373:android:64e0a8df461bfe3c6eef6c",
+        "android_client_info": {
+          "package_name": "com.expressive.sicantik"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "455765338373-q01n8d0a69vt31boddn5hpqt1dstbnh8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCg_W6WGemJMiEaxBN_aia8WOlZCnSN7g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "455765338373-q01n8d0a69vt31boddn5hpqt1dstbnh8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "455765338373-si8210n7chmvatjb6uuetcasfid9o0jd.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.technologyrobot.sicantik"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:455765338373:android:a93c1f7d17e2ccc46eef6c",
+        "android_client_info": {
+          "package_name": "com.technologyrobot.sicantik"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "455765338373-q01n8d0a69vt31boddn5hpqt1dstbnh8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCg_W6WGemJMiEaxBN_aia8WOlZCnSN7g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "455765338373-q01n8d0a69vt31boddn5hpqt1dstbnh8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "455765338373-si8210n7chmvatjb6uuetcasfid9o0jd.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.technologyrobot.sicantik"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

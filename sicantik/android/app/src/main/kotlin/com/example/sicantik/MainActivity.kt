@@ -1,4 +1,4 @@
-package com.elegantnote.sicantik
+package com.expressive.sicantik
 
 import io.flutter.embedding.android.FlutterActivity
 

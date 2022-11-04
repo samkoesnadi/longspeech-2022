@@ -1,20 +1,20 @@
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
-import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_mlkit_entity_extraction/google_mlkit_entity_extraction.dart';
 import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:tuple/tuple.dart';
-
+import 'package:sicantik/helpers/flutter_quill_extensions.dart';
 import 'package:sicantik/helpers/summarize.dart';
+import 'package:sicantik/utils.dart';
+import 'package:tuple/tuple.dart';
 
 Map entityExtractionLanguageMap = {
   "en": EntityExtractorLanguage.english,
@@ -34,10 +34,12 @@ Map entityExtractionLanguageMap = {
   "tr": EntityExtractorLanguage.turkish
 };
 
-final _entityExtractorModelManager = EntityExtractorModelManager();
-
-Future<void> saveDocument(String noteId, String title,
-    Document quillControllerDocument, bool isStarred) async {
+Future<void> saveDocument(
+    String noteId,
+    String title,
+    Document quillControllerDocument,
+    bool isStarred,
+    Map<String, dynamic> imageClassifications) async {
   final noteStorage = GetStorage("notes");
 
   // Update full text
@@ -51,9 +53,21 @@ Future<void> saveDocument(String noteId, String title,
   noteMetadata["title"] = title;
   noteMetadata["editedAt"] = DateTime.now().toString();
   noteMetadata["summarized"] = aiAnalysisResult["summarized"];
+  noteMetadata["wordCount"] = aiAnalysisResult["wordCount"];
+
+  for (final keywords in imageClassifications.values) {
+    for (String keyword in keywords) {
+      if (!aiAnalysisResult["entities"].contains(keyword)) {
+        aiAnalysisResult["entities"].add(keyword);
+      }
+    }
+  }
 
   await noteStorage.write(noteId, noteMetadata);
-  await noteStorage.write("$noteId-ners", aiAnalysisResult["entities"]);
+  await noteStorage.write(
+      "$noteId-ners", aiAnalysisResult["entities"]);
+  await noteStorage.write(
+      "$noteId-imageClassifications", imageClassifications);
   await noteStorage.write(
       "$noteId-detectedLanguages", aiAnalysisResult["detectedLanguages"]);
   await noteStorage.write("noteIds",
@@ -70,12 +84,14 @@ Future<void> deleteDocument(String noteId) async {
 
   await noteStorage.remove("$noteId-ners");
   await noteStorage.remove("$noteId-detectedLanguages");
+  await noteStorage.remove("$noteId-imageClassifications");
   await noteStorage.remove(noteId);
   await noteStorage.write("noteIds", noteIds);
 
   await saveStarred(false, noteId);
 
-  for (int noteId in (noteStorage.read("$noteId-reminders")?.cast<int>() ?? [])) {
+  for (int noteId
+      in (noteStorage.read("$noteId-reminders")?.cast<int>() ?? [])) {
     reminderStorage.remove(noteId.toString());
   }
   noteStorage.remove("$noteId-reminders");
@@ -96,8 +112,12 @@ Future<void> saveStarred(bool isStarred, String noteId) async {
 }
 
 Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
-  // Update AI analysis and metadata
-  String summarized = summarize(paragraph: plainText, amountOfSentences: 15);
+  String summarized = "";
+  try {
+    summarized = summarize(paragraph: plainText, amountOfSentences: 15);
+  } catch (e) {
+    logger.e(e);
+  }
 
   //// Identify text language
   final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.5);
@@ -119,10 +139,7 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
       final entityExtractor =
           EntityExtractor(language: entityExtractorLanguage);
 
-      bool modelDownloaded = await _entityExtractorModelManager
-          .isModelDownloaded(entityExtractorLanguage.name);
-
-      if (modelDownloaded) {
+      try {
         final List<EntityAnnotation> annotations =
             await entityExtractor.annotateText(summarized);
         entityExtractor.close();
@@ -132,7 +149,7 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
           entities
               .add("${annotation.entities[0].type.name}: ${annotation.text}");
         }
-      } else {
+      } catch (e) {
         Fluttertoast.showToast(
             msg:
                 "Connect to internet if you want proper entity extraction result");
@@ -140,13 +157,16 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
     }
   }
 
+  // Count word
+  int wordCount = RegExp(r"\w+").allMatches(plainText).length;
+
   return {
     "summarized": summarized,
     "entities": entities,
-    "detectedLanguages": detectedLanguages
+    "detectedLanguages": detectedLanguages,
+    "wordCount": wordCount
   };
 }
-
 
 class MyQuillEditor {
   QuillController quillController;
@@ -161,16 +181,18 @@ class MyQuillEditor {
     // Saves the image to applications directory
     final appDocDir = await getApplicationDocumentsDirectory();
     final file = await File(
-        '${appDocDir.path}/${basename('${DateTime.now().millisecondsSinceEpoch}.png')}')
+            '${appDocDir.path}/${basename('${DateTime.now().millisecondsSinceEpoch}.png')}')
         .writeAsBytes(imageBytes, flush: true);
     return file.path.toString();
   }
 
-  QuillEditor generateQuillEditor ({bool readOnly = false}) {
+  QuillEditor generateQuillEditor(
+      {bool readOnly = false, void Function(String)? onImageRemove, dynamic imageArguments}) {
     return QuillEditor(
       controller: quillController,
       scrollController: ScrollController(),
       scrollable: true,
+      showCursor: true,
       focusNode: focusNode,
       autoFocus: false,
       readOnly: readOnly,
@@ -179,20 +201,20 @@ class MyQuillEditor {
       padding: EdgeInsets.zero,
       onImagePaste: _onImagePaste,
       customStyles: DefaultStyles(
-        h1: DefaultTextBlockStyle(
-            const TextStyle(
-              fontSize: 32,
-              color: Colors.black,
-              height: 1.15,
-              fontWeight: FontWeight.w300,
-            ),
-            const Tuple2(16, 0),
-            const Tuple2(0, 0),
-            null),
-        sizeSmall: const TextStyle(fontSize: 9)
-      ),
-      embedBuilders: [...FlutterQuillEmbeds.builders()],
+          h1: DefaultTextBlockStyle(
+              const TextStyle(
+                fontSize: 32,
+                color: Colors.black,
+                height: 1.15,
+                fontWeight: FontWeight.w300,
+              ),
+              const Tuple2(16, 0),
+              const Tuple2(0, 0),
+              null),
+          sizeSmall: const TextStyle(fontSize: 9)),
+      embedBuilders: [
+        ...FlutterQuillEmbeds.builders(onImageRemove: onImageRemove, imageArguments: imageArguments)
+      ],
     );
   }
 }
-

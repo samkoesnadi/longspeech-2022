@@ -4,10 +4,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
-import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
-import 'package:flutter_tags/flutter_tags.dart';
+import 'package:flutter_quill_extensions/embeds/widgets/image.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -15,6 +13,9 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:sicantik/helpers/document.dart';
+import 'package:sicantik/helpers/flutter_quill_extensions.dart';
+import 'package:sicantik/helpers/image_labeler.dart';
+import 'package:sicantik/helpers/speech_to_text.dart';
 import 'package:sicantik/screens/view_note_screen.dart';
 import 'package:sicantik/utils.dart';
 import 'package:sicantik/widgets/scaffold.dart';
@@ -37,6 +38,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
   late String noteId;
   late List<String> allStarred;
   bool isStarred = false;
+  late Map<String, dynamic> imageClassifications;
 
   @override
   void initState() {
@@ -63,14 +65,11 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
         document: doc, selection: const TextSelection.collapsed(offset: 0));
     allStarred = noteStorage.read("starred")?.cast<String>() ?? [];
 
-    _titleController.addListener(() {
-      Map<String, String> noteMetadata = noteStorage.read(noteId) ?? {};
-      noteMetadata["title"] = _titleController.text;
-      noteStorage.write(noteId, noteMetadata);
-    });
-
     myQuillEditor =
         MyQuillEditor(quillController: _quillController, focusNode: _focusNode);
+
+    imageClassifications =
+        noteStorage.read("$noteId-imageClassifications") ?? {};
   }
 
   @override
@@ -79,7 +78,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
         resizeToAvoidBottomInset: true,
         backgroundColor: Colors.white,
         body: Column(children: [
-          // Reminder
+          const Padding(padding: EdgeInsets.all(5)),
           Flexible(
               fit: FlexFit.loose,
               child: RawKeyboardListener(
@@ -104,6 +103,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
         title: Container(
             alignment: Alignment.centerLeft,
             color: Colors.white70,
+            padding: const EdgeInsets.only(left: 5, right: 5),
             child: TextField(
               controller: _titleController,
               decoration: const InputDecoration(border: InputBorder.none),
@@ -111,24 +111,33 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () async {
-            Alert(context: context, buttons: [
-              DialogButton(
-                  child: const Text("Cancel"), onPressed: () => Get.back()),
-              DialogButton(
-                  child: const Text("Discard"),
-                  onPressed: () {
-                    Get.back();
-                    Get.back(); // get to the previous screen
-                  }),
-              DialogButton(
-                  child: const Text("Save"),
-                  onPressed: () async {
-                    await saveDocument(noteId, _titleController.text,
-                        _quillController.document, isStarred);
-                    Get.off(() => const ViewNoteScreen(),
-                        arguments: {"noteId": noteId});
-                  })
-            ]).show();
+            Alert(
+                context: context,
+                title: "What should we do with this document, boss?",
+                buttons: [
+                  DialogButton(
+                      child: const Text("Cancel"), onPressed: () => Get.back()),
+                  DialogButton(
+                      child: const Text("Discard"),
+                      onPressed: () {
+                        Get.back();
+                        Get.off(() => const ViewNoteScreen(),
+                            arguments: {"noteId": noteId});
+                      }),
+                  DialogButton(
+                      child: const Text("Save"),
+                      onPressed: () async {
+                        await saveDocument(
+                            noteId,
+                            _titleController.text,
+                            _quillController.document,
+                            isStarred,
+                            imageClassifications);
+                        Get.back();
+                        Get.off(() => const ViewNoteScreen(),
+                            arguments: {"noteId": noteId});
+                      })
+                ]).show();
           },
         ),
         appBarActions: [
@@ -141,7 +150,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
           IconButton(
               onPressed: () async {
                 await saveDocument(noteId, _titleController.text,
-                    _quillController.document, isStarred);
+                    _quillController.document, isStarred, imageClassifications);
 
                 Fluttertoast.showToast(msg: "The document is saved");
               },
@@ -157,7 +166,29 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
     final appDocDir = await getApplicationDocumentsDirectory();
     final copiedFile =
         await file.copy('${appDocDir.path}/${basename(file.path)}');
-    return copiedFile.path.toString();
+
+    // Process image labeling
+    final labels = await processImageLabeling(copiedFile.path);
+
+    String toastText = 'Detected labels:';
+    List<String> detectedObjects = [];
+    if (labels.length == 0) {
+      toastText += "none";
+    } else {
+      for (final label in labels) {
+        if (label.confidence > 0.1) {
+          toastText += '\n- ${label.label}, '
+              'confidence: ${label.confidence.toStringAsFixed(2)}';
+          detectedObjects.add(label.label);
+        }
+      }
+    }
+    String localPath = copiedFile.path.toString();
+
+    imageClassifications[standardizeImageUrl(localPath)] = detectedObjects;
+    Fluttertoast.showToast(msg: toastText, toastLength: Toast.LENGTH_LONG);
+
+    return localPath;
   }
 
   // Renders the video picked by imagePicker from local file storage
@@ -173,18 +204,123 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
 
   Widget _buildEditor(BuildContext context) {
     var toolbar = QuillToolbar.basic(
+      toolbarIconSize: 21,
       controller: _quillController,
       embedButtons: FlutterQuillEmbeds.buttons(
-        // provide a callback to enable picking images from device.
-        // if omit, "image" button only allows adding images from url.
-        // same goes for videos.
-        onImagePickCallback: _onImagePickCallback,
-        onVideoPickCallback: _onVideoPickCallback,
-        // uncomment to provide a custom "pick from" dialog.
-        // mediaPickSettingSelector: _selectMediaPickSetting,
-        // uncomment to provide a custom "pick from" dialog.
-        // cameraPickSettingSelector: _selectCameraPickSetting,
-      ),
+            // provide a callback to enable picking images from device.
+            // if omit, "image" button only allows adding images from url.
+            // same goes for videos.
+            onImagePickCallback: _onImagePickCallback,
+            onVideoPickCallback: _onVideoPickCallback,
+            // uncomment to provide a custom "pick from" dialog.
+            // mediaPickSettingSelector: _selectMediaPickSetting,
+            // uncomment to provide a custom "pick from" dialog.
+            // cameraPickSettingSelector: _selectCameraPickSetting,
+          ) +
+          [
+            (controller, toolbarIconSize, iconTheme, dialogTheme) {
+              return QuillIconButton(
+                icon: Icon(Icons.mic,
+                    size: toolbarIconSize,
+                    color: iconTheme?.iconUnselectedColor),
+                highlightElevation: 0,
+                hoverElevation: 0,
+                size: toolbarIconSize * 1.77,
+                fillColor: Colors.lightGreenAccent,
+                borderRadius: iconTheme?.borderRadius ?? 2,
+                onPressed: () async {
+                  final controller = _quillController;
+                  final index = controller.selection.baseOffset;
+                  final length = controller.selection.extentOffset - index;
+
+                  if (!await SpeechToTextHandler.preInitSpeechState()) {
+                    Alert(
+                            context: context,
+                            type: AlertType.error,
+                            title: "No speech")
+                        .show();
+                  } else {
+                    Alert(
+                      context: context,
+                      content: Flex(
+                        direction: Axis.vertical,
+                        children: [
+                          const Text('Language:'),
+                          DropdownButton<String>(
+                            isExpanded: true,
+                            onChanged: (selectedVal) {
+                              if (selectedVal != null) {
+                                SpeechToTextHandler.currentLocaleId =
+                                    selectedVal;
+                              }
+                            },
+                            value: SpeechToTextHandler.currentLocaleId,
+                            items: SpeechToTextHandler.localeNames
+                                .map(
+                                  (localeName) => DropdownMenuItem(
+                                    value: localeName.localeId,
+                                    child: Text(localeName.name,
+                                        overflow: TextOverflow.ellipsis),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                      ),
+                      buttons: [
+                        DialogButton(
+                          child: const Text("OK"),
+                          onPressed: () async {
+                            Get.back();
+
+                            final partialTextController =
+                                "Waiting for input...".obs;
+                            final speechToTextHandler = SpeechToTextHandler(
+                                partialResultListener: (String partialText,
+                                    String fullText, int lastTextCount) {
+                              partialTextController.value =
+                                  SpeechToTextHandler.combineSentences(
+                                      fullText, lastTextCount, partialText)[0];
+                              partialTextController.refresh();
+                            }, errorListener: (String errorText) {
+                              partialTextController.value = "Error: $errorText";
+                              partialTextController.refresh();
+                            });
+                            speechToTextHandler.listen();
+                            Alert(
+                                context: context,
+                                content: Obx(
+                                    () => Text(partialTextController.value)),
+                                buttons: [
+                                  DialogButton(
+                                    child: const Text("Stop"),
+                                    onPressed: () {
+                                      speechToTextHandler.stopListening();
+                                      Get.back();
+
+                                      controller.replaceText(
+                                          index,
+                                          length,
+                                          speechToTextHandler.fullText,
+                                          TextSelection.collapsed(
+                                              offset: index +
+                                                  speechToTextHandler
+                                                      .fullText.length));
+                                    },
+                                  )
+                                ],
+                                closeFunction: () {
+                                  speechToTextHandler.stopListening();
+                                }).show();
+                          },
+                        )
+                      ],
+                    ).show();
+                  }
+                },
+              );
+            }
+          ],
       showAlignmentButtons: true,
       afterButtonPressed: _focusNode.requestFocus,
     );
@@ -198,7 +334,12 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
             child: Container(
               color: Colors.white,
               padding: const EdgeInsets.only(left: 16, right: 16),
-              child: myQuillEditor.generateQuillEditor(),
+              child: myQuillEditor.generateQuillEditor(
+                  onImageRemove: (String imageUrl) {
+                    File(imageUrl).delete();
+                    imageClassifications.remove(imageUrl);
+                  },
+                  imageArguments: imageClassifications),
             ),
           ),
           Container(child: toolbar)

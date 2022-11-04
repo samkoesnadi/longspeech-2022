@@ -35,7 +35,8 @@ Future initLocalNotification() async {
           onDidReceiveBackgroundNotificationResponse:
               onDidReceiveNotificationResponse)
       .then((_) {
-    logger.d("setupPlugin: setup success");
+    logger.d("LocalNotification setup successfully");
+
   }).catchError((Object error) {
     logger.e("Error: $error");
   });

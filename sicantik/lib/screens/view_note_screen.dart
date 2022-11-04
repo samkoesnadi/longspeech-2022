@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
+import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:flutter_tags/flutter_tags.dart';
 import 'package:get/get.dart';
@@ -63,18 +64,37 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
 
   @override
   Widget build(BuildContext context) {
+    List<String> detectedLanguageCodes =
+        noteStorage.read("$noteId-detectedLanguages")!.cast<String>();
+    List<String> detectedLanguages = detectedLanguageCodes
+        .map((elem) =>
+            LocaleNames.of(context)!.nameOf(elem.substring(0, 2)) ??
+            "unidentified".tr)
+        .toList(); // null
+
+    Map<String, dynamic> noteMetadata = noteStorage.read(noteId)!;
+    Map<String, dynamic> imageClassifications =
+        noteStorage.read("$noteId-imageClassifications") ?? {};
+
     List<CardData> aiAnalysisCardData = [];
-    aiAnalysisCardData.add(CardData(
-        title: "Summary", description: noteStorage.read(noteId)["summarized"]));
+    aiAnalysisCardData.add(
+        CardData(title: "Summary", description: noteMetadata["summarized"]));
     aiAnalysisCardData.add(CardData(
         title: "Detected languages",
-        description: noteStorage.read("$noteId-detectedLanguages").join(", ")));
+        description: detectedLanguages.join(", ")));
     aiAnalysisCardData.add(CardData(
-        title: "Detected entities",
+        title: "Words count",
+        description: noteMetadata["wordCount"].toString()));
+    aiAnalysisCardData.add(CardData(
+        title: "Detected key information",
         description: noteStorage.read("$noteId-ners").join(", ")));
+    aiAnalysisCardData.add(CardData(
+        title: "Edited at",
+        description:
+            dateFormat.format(DateTime.parse(noteMetadata['editedAt']))));
 
-    String title = noteStorage.read(noteId)["title"];
-    String description = noteStorage.read(noteId)["summarized"];
+    String title = noteMetadata["title"];
+    String description = noteMetadata["summarized"];
 
     return MyScaffold(
       resizeToAvoidBottomInset: true,
@@ -88,7 +108,7 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
       },
       appBarBottom: TabBar(controller: _tabController, tabs: const [
         Tab(text: "View"),
-        Tab(text: "AI-analysis"),
+        Tab(text: "Analysis/Info"),
         Tab(text: "Reminders")
       ]),
       body: TabBarView(
@@ -96,9 +116,10 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
         children: [
           // view
           Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             child: Container(
-              child: myQuillEditor.generateQuillEditor(readOnly: true),
+              child: myQuillEditor.generateQuillEditor(
+                  readOnly: true, imageArguments: imageClassifications),
             ),
           ),
           // AI-assist
@@ -110,15 +131,24 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
                       shrinkWrap: true,
                       itemCount: aiAnalysisCardData.length,
                       itemBuilder: (BuildContext context, int index) {
+                        String description = "none";
+                        if (aiAnalysisCardData[index].description != "") {
+                          description = aiAnalysisCardData[index].description;
+                        }
                         return Column(children: [
-                          Text(aiAnalysisCardData[index].title),
-                          Text(aiAnalysisCardData[index].description)
+                          Text(aiAnalysisCardData[index].title,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 24)),
+                          Text(description,
+                              style: const TextStyle(fontSize: 24)),
+                          const Padding(padding: EdgeInsets.only(bottom: 10)),
+                          const Divider(thickness: 5)
                         ]);
                       }))),
           Padding(
               padding: const EdgeInsets.all(3.0),
               child: Column(children: [
-                TextButton(
+                ElevatedButton(
                     onPressed: () async {
                       await DatePicker.showDateTimePicker(context,
                           showTitleActions: true,
@@ -126,7 +156,8 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
                           currentTime: DateTime.now(), onConfirm: (date) async {
                         int id = await scheduleNotification(title, description,
                             noteId, tz.TZDateTime.from(date, tz.local));
-                        await reminderStorage.write(id.toString(), date.toString());
+                        await reminderStorage.write(
+                            id.toString(), date.toString());
                         reminders.add(Reminder(id: id, datetime: date));
                       });
                     },
@@ -158,11 +189,12 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
                           textColor: Colors.white,
                           color: Colors.blueGrey,
                           index: index,
-                          title: item.datetime.toString(),
+                          title: dateFormat.format(item.datetime),
                           removeButton: ItemTagsRemoveButton(
                             onRemoved: () {
                               removeNotification(reminders[index].id);
-                              reminderStorage.remove(reminders[index].id.toString());
+                              reminderStorage
+                                  .remove(reminders[index].id.toString());
                               reminders.removeAt(index);
                               return true;
                             },
