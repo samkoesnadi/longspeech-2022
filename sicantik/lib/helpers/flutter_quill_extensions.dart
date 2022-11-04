@@ -113,7 +113,7 @@ class MyImageEmbedBuilder implements EmbedBuilder {
     var image;
     final imageUrl = standardizeImageUrl(node.value.data);
 
-    List<String> detectedObjects = [];
+    List<String> detectedObjects = ["none"];
     if (imageArguments != null) {
       detectedObjects = imageArguments[imageUrl];
     }

@@ -22,13 +22,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.7.0"
-  appcheck:
-    dependency: "direct main"
-    description:
-      name: appcheck
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.6"
   archive:
     dependency: transitive
     description:
@@ -781,13 +774,6 @@ packages:
     dependency: transitive
     description:
       name: mime
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.2"
-  music_visualizer:
-    dependency: "direct main"
-    description:
-      name: music_visualizer
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.2"

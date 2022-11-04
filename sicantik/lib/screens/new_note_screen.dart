@@ -250,25 +250,30 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                         direction: Axis.vertical,
                         children: [
                           const Text('Language:'),
-                          DropdownButton<String>(
-                            isExpanded: true,
-                            onChanged: (selectedVal) {
-                              if (selectedVal != null) {
-                                SpeechToTextHandler.currentLocaleId =
-                                    selectedVal;
-                              }
-                            },
-                            value: SpeechToTextHandler.currentLocaleId,
-                            items: SpeechToTextHandler.localeNames
-                                .map(
-                                  (localeName) => DropdownMenuItem(
-                                    value: localeName.localeId,
-                                    child: Text(localeName.name,
-                                        overflow: TextOverflow.ellipsis),
-                                  ),
-                                )
-                                .toList(),
-                          ),
+                          StatefulBuilder(builder:
+                              (BuildContext context, StateSetter setState) {
+                            return DropdownButton<String>(
+                              isExpanded: true,
+                              onChanged: (selectedVal) {
+                                setState(() {
+                                  if (selectedVal != null) {
+                                    SpeechToTextHandler.currentLocaleId =
+                                        selectedVal;
+                                  }
+                                });
+                              },
+                              value: SpeechToTextHandler.currentLocaleId,
+                              items: SpeechToTextHandler.localeNames
+                                  .map(
+                                    (localeName) => DropdownMenuItem(
+                                      value: localeName.localeId,
+                                      child: Text(localeName.name,
+                                          overflow: TextOverflow.ellipsis),
+                                    ),
+                                  )
+                                  .toList(),
+                            );
+                          })
                         ],
                       ),
                       buttons: [
@@ -302,14 +307,14 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                                       speechToTextHandler.stopListening();
                                       Get.back();
 
+                                      String fullText =
+                                          "${speechToTextHandler.fullText}. ";
                                       controller.replaceText(
                                           index,
                                           length,
-                                          speechToTextHandler.fullText,
+                                          fullText,
                                           TextSelection.collapsed(
-                                              offset: index +
-                                                  speechToTextHandler
-                                                      .fullText.length));
+                                              offset: index + fullText.length));
                                     },
                                   )
                                 ],

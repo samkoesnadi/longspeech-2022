@@ -136,10 +136,10 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
                           description = aiAnalysisCardData[index].description;
                         }
                         return Column(children: [
-                          Text(aiAnalysisCardData[index].title,
+                          SelectableText(aiAnalysisCardData[index].title,
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 24)),
-                          Text(description,
+                          SelectableText(description,
                               style: const TextStyle(fontSize: 24)),
                           const Padding(padding: EdgeInsets.only(bottom: 10)),
                           const Divider(thickness: 5)
