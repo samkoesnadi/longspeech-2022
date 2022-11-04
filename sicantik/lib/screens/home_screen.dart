@@ -3,6 +3,7 @@ import 'package:fuzzy/data/result.dart';
 import 'package:fuzzy/fuzzy.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:sicantik/helpers/document.dart';
 import 'package:sicantik/screens/new_note_screen.dart';
 import 'package:sicantik/screens/view_note_screen.dart';
@@ -76,8 +77,16 @@ class HomeScreenState extends State<HomeScreen> {
           isStarred: allStarred.contains(noteId)));
       trailing.add(IconButton(
           onPressed: () async {
-            await deleteDocument(noteId);
-            cardDataObx.removeWhere((element) => element.noteId == noteId);
+            Alert(context: context, title: "Are you sure?", buttons: [
+              DialogButton(
+                  child: const Text("Yes"),
+                  onPressed: () async {
+                    Get.back();
+                    await deleteDocument(noteId);
+                    cardDataObx
+                        .removeWhere((element) => element.noteId == noteId);
+                  })
+            ]).show();
           },
           icon: Icon(Icons.delete, color: Theme.of(context).primaryColor)));
       String summarized = note["summarized"];

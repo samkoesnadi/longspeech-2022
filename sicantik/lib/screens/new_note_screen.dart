@@ -121,8 +121,12 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                       child: const Text("Discard"),
                       onPressed: () {
                         Get.back();
-                        Get.off(() => const ViewNoteScreen(),
-                            arguments: {"noteId": noteId});
+                        if (noteStorage.hasData(noteId)) {
+                          Get.off(() => const ViewNoteScreen(),
+                              arguments: {"noteId": noteId});
+                        } else {
+                          Get.back();
+                        }
                       }),
                   DialogButton(
                       child: const Text("Save"),
