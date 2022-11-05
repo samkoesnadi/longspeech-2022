@@ -13,7 +13,6 @@ import 'package:sicantik/helpers/notification.dart';
 import 'package:sicantik/internationalization.dart';
 import 'package:sicantik/screens/home_screen.dart';
 import 'package:sicantik/theme_data.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 
 
 void main() async {
@@ -24,11 +23,10 @@ void main() async {
   await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
 
   await GetStorage.init();
+  await GetStorage.init("notes");
+  await GetStorage.init("reminders");
   await initLocalNotification();
   await initializeImageLabeler();
-
-  VisibilityDetectorController.instance.updateInterval =
-      const Duration(milliseconds: 5);
 
   await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
     DeviceOrientation.portraitUp,

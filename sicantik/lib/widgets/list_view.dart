@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:sicantik/utils.dart';
-import 'package:sicantik/widgets/scrollbar.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 
 BoxScrollView generateListView(
     {required ScrollController scrollController,
-    required List<CardData> cardData, Color? cardDividerColor}) {
+    required List<CardData> cardData,
+    Color? cardDividerColor}) {
   // divider for the card
   final cardDivider =
       Divider(thickness: 5, indent: 5, endIndent: 5, color: cardDividerColor);
@@ -49,42 +47,22 @@ BoxScrollView generateListView(
                 ],
               ),
               child: Center(
-                  child: VisibilityDetector(
-                key: Key(index.toString()),
-                onVisibilityChanged: (VisibilityInfo info) {
-                  GetStorage box = GetStorage();
-
-                  // onVisibilityGained(headline);
-                  Set<dynamic> visibleHeadlines = {};
-                  if (box.hasData(visibleHeadlinesKey)) {
-                    visibleHeadlines = {...box.read(visibleHeadlinesKey)};
-                  }
-                  if (info.visibleFraction > 0.0) {
-                    visibleHeadlines.add(index);
-                  } else {
-                    visibleHeadlines.remove(index);
-                  }
-
-                  box.writeInMemory(
-                      visibleHeadlinesKey, visibleHeadlines.toList());
-                },
-                child: Padding(
-                    padding: const EdgeInsets.all(3.0),
-                    child: Column(
-                      children: [
-                        // the title
-                        titleWidget,
-                        // the description
-                        Text(
-                          description,
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                        Align(
-                            alignment: Alignment.bottomRight,
-                            child: Text(cardData[index].editedAt!))
-                      ],
-                    )),
-              )),
+                  child: Padding(
+                      padding: const EdgeInsets.all(3.0),
+                      child: Column(
+                        children: [
+                          // the title
+                          titleWidget,
+                          // the description
+                          Text(
+                            description,
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                          Align(
+                              alignment: Alignment.bottomRight,
+                              child: Text(cardData[index].editedAt!))
+                        ],
+                      ))),
             ));
       });
 }
