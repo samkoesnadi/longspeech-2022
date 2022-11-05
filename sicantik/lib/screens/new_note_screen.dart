@@ -74,95 +74,98 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MyScaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: Colors.white,
-        body: Column(children: [
-          const Padding(padding: EdgeInsets.all(5)),
-          Flexible(
-              fit: FlexFit.loose,
-              child: RawKeyboardListener(
-                focusNode: FocusNode(),
-                onKey: (event) {
-                  if (event.data.isControlPressed && event.character == 'b') {
-                    if (_quillController
-                        .getSelectionStyle()
-                        .attributes
-                        .keys
-                        .contains('bold')) {
-                      _quillController.formatSelection(
-                          Attribute.clone(Attribute.bold, null));
-                    } else {
-                      _quillController.formatSelection(Attribute.bold);
-                    }
-                  }
-                },
-                child: _buildEditor(context),
-              ))
-        ]),
-        title: Container(
-            alignment: Alignment.centerLeft,
-            color: Colors.white70,
-            padding: const EdgeInsets.only(left: 5, right: 5),
-            child: TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(border: InputBorder.none),
-            )),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () async {
-            Alert(
-                onWillPopActive: true,
-                context: context,
-                style: const AlertStyle(isOverlayTapDismiss: false),
-                title: "What should we do with this document, boss?",
-                buttons: [
-                  DialogButton(
-                      child: const Text("Cancel"), onPressed: () => Get.back()),
-                  DialogButton(
-                      child: const Text("Discard"),
-                      onPressed: () {
-                        Get.back();
-                        if (noteStorage.hasData(noteId)) {
-                          Get.off(() => const ViewNoteScreen(),
-                              arguments: {"noteId": noteId});
-                        } else {
-                          Get.back();
-                        }
-                      }),
-                  DialogButton(
-                      child: const Text("Save"),
-                      onPressed: () async {
-                        Get.back();
-                        await saveDocument(
-                            noteId,
-                            _titleController.text,
-                            _quillController.document,
-                            isStarred,
-                            imageClassifications);
-                        Fluttertoast.showToast(msg: "The document is saved");
+    return WillPopScope(
+        onWillPop: () async {
+          await Alert(
+              context: context,
+              style: const AlertStyle(isOverlayTapDismiss: false),
+              title: "What should we do with this document, boss?",
+              buttons: [
+                DialogButton(
+                    child: const Text("Cancel"), onPressed: () => Get.back()),
+                DialogButton(
+                    child: const Text("Discard"),
+                    onPressed: () {
+                      Get.back();
+                      if (noteStorage.hasData(noteId)) {
                         Get.off(() => const ViewNoteScreen(),
                             arguments: {"noteId": noteId});
-                      })
-                ]).show();
-          },
-        ),
-        appBarActions: [
-          StarButton(
-              isStarred: allStarred.contains(noteId),
-              iconColor: Colors.white,
-              valueChanged: (_isStarred) {
-                isStarred = _isStarred;
-              }),
-          IconButton(
-              onPressed: () async {
-                await saveDocument(noteId, _titleController.text,
-                    _quillController.document, isStarred, imageClassifications);
+                      } else {
+                        Get.back();
+                      }
+                    }),
+                DialogButton(
+                    child: const Text("Save"),
+                    onPressed: () async {
+                      Get.back();
+                      await saveDocument(
+                          noteId,
+                          _titleController.text,
+                          _quillController.document,
+                          isStarred,
+                          imageClassifications);
+                      Fluttertoast.showToast(msg: "The document is saved");
+                      Get.off(() => const ViewNoteScreen(),
+                          arguments: {"noteId": noteId});
+                    })
+              ]).show();
+          return false;
+        },
+        child: MyScaffold(
+            resizeToAvoidBottomInset: true,
+            backgroundColor: Colors.white,
+            body: Column(children: [
+              const Padding(padding: EdgeInsets.all(5)),
+              Flexible(
+                  fit: FlexFit.loose,
+                  child: RawKeyboardListener(
+                    focusNode: FocusNode(),
+                    onKey: (event) {
+                      if (event.data.isControlPressed &&
+                          event.character == 'b') {
+                        if (_quillController
+                            .getSelectionStyle()
+                            .attributes
+                            .keys
+                            .contains('bold')) {
+                          _quillController.formatSelection(
+                              Attribute.clone(Attribute.bold, null));
+                        } else {
+                          _quillController.formatSelection(Attribute.bold);
+                        }
+                      }
+                    },
+                    child: _buildEditor(context),
+                  ))
+            ]),
+            title: Container(
+                alignment: Alignment.centerLeft,
+                color: Colors.white70,
+                padding: const EdgeInsets.only(left: 5, right: 5),
+                child: TextField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(border: InputBorder.none),
+                )),
+            appBarActions: [
+              StarButton(
+                  isStarred: allStarred.contains(noteId),
+                  iconColor: Colors.white,
+                  valueChanged: (_isStarred) {
+                    isStarred = _isStarred;
+                  }),
+              IconButton(
+                  onPressed: () async {
+                    await saveDocument(
+                        noteId,
+                        _titleController.text,
+                        _quillController.document,
+                        isStarred,
+                        imageClassifications);
 
-                Fluttertoast.showToast(msg: "The document is saved");
-              },
-              icon: const Icon(Icons.save))
-        ]);
+                    Fluttertoast.showToast(msg: "The document is saved");
+                  },
+                  icon: const Icon(Icons.save))
+            ]));
   }
 
   // Renders the image picked by imagePicker from local file storage
