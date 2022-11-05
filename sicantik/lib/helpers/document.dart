@@ -64,10 +64,8 @@ Future<void> saveDocument(
   }
 
   await noteStorage.write(noteId, noteMetadata);
-  await noteStorage.write(
-      "$noteId-ners", aiAnalysisResult["entities"]);
-  await noteStorage.write(
-      "$noteId-imageClassifications", imageClassifications);
+  await noteStorage.write("$noteId-ners", aiAnalysisResult["entities"]);
+  await noteStorage.write("$noteId-imageClassifications", imageClassifications);
   await noteStorage.write(
       "$noteId-detectedLanguages", aiAnalysisResult["detectedLanguages"]);
   await noteStorage.write("noteIds",
@@ -114,12 +112,14 @@ Future<void> saveStarred(bool isStarred, String noteId) async {
 Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   String summarized = "";
   try {
+    Fluttertoast.showToast(msg: "Summarizing...");
     summarized = summarize(paragraph: plainText, amountOfSentences: 15);
   } catch (e) {
     logger.e(e);
   }
 
   //// Identify text language
+  Fluttertoast.showToast(msg: "Identifying language...");
   final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.5);
   final List<IdentifiedLanguage> possibleLanguages =
       await languageIdentifier.identifyPossibleLanguages(summarized);
@@ -136,6 +136,9 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
       EntityExtractorLanguage entityExtractorLanguage =
           entityExtractionLanguageMap[detectedLanguage];
 
+      Fluttertoast.showToast(
+          msg:
+              "Extracting entity for ${entityExtractorLanguage.toString().split('.').last}...");
       final entityExtractor =
           EntityExtractor(language: entityExtractorLanguage);
 
@@ -187,7 +190,9 @@ class MyQuillEditor {
   }
 
   QuillEditor generateQuillEditor(
-      {bool readOnly = false, void Function(String)? onImageRemove, dynamic imageArguments}) {
+      {bool readOnly = false,
+      void Function(String)? onImageRemove,
+      dynamic imageArguments}) {
     return QuillEditor(
       controller: quillController,
       scrollController: ScrollController(),
@@ -213,7 +218,8 @@ class MyQuillEditor {
               null),
           sizeSmall: const TextStyle(fontSize: 9)),
       embedBuilders: [
-        ...FlutterQuillEmbeds.builders(onImageRemove: onImageRemove, imageArguments: imageArguments)
+        ...FlutterQuillEmbeds.builders(
+            onImageRemove: onImageRemove, imageArguments: imageArguments)
       ],
     );
   }

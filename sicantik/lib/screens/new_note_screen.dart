@@ -112,7 +112,9 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () async {
             Alert(
+                onWillPopActive: true,
                 context: context,
+                style: const AlertStyle(isOverlayTapDismiss: false),
                 title: "What should we do with this document, boss?",
                 buttons: [
                   DialogButton(
@@ -131,13 +133,14 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                   DialogButton(
                       child: const Text("Save"),
                       onPressed: () async {
+                        Get.back();
                         await saveDocument(
                             noteId,
                             _titleController.text,
                             _quillController.document,
                             isStarred,
                             imageClassifications);
-                        Get.back();
+                        Fluttertoast.showToast(msg: "The document is saved");
                         Get.off(() => const ViewNoteScreen(),
                             arguments: {"noteId": noteId});
                       })
