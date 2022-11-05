@@ -113,9 +113,12 @@ class MyImageEmbedBuilder implements EmbedBuilder {
     var image;
     final imageUrl = standardizeImageUrl(node.value.data);
 
-    List<String> detectedObjects = ["none"];
+    List<String> detectedObjects = [];
     if (imageArguments != null) {
       detectedObjects = imageArguments[imageUrl];
+    }
+    if (detectedObjects.isEmpty) {
+      detectedObjects = ["none"];
     }
 
     Tuple2<double?, double?>? _widthHeight;

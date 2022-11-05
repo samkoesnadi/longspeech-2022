@@ -101,7 +101,13 @@ List<String> splitIntoSentences(String text) {
   text += "<stop>";
   List<String> sentences = text.split("<stop>");
   sentences.removeLast();
-  sentences = sentences.map((e) => e.trim()).toList();
+  sentences = sentences
+      .map((e) => e
+          .replaceAll(
+              RegExp(r"[^\w !'§<>|\''\$%&\/()=?\\`´+*#öäüÜÖÄ,.\-;:_^{}\[\]]"),
+              "")
+          .trim())
+      .toList();
   sentences.removeWhere((element) => element == "");
   return sentences;
 }
