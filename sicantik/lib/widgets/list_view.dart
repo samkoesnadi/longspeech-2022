@@ -54,10 +54,11 @@ BoxScrollView generateListView(
                           // the title
                           titleWidget,
                           // the description
-                          Text(
+                          Padding(padding: EdgeInsets.all(5), child: Text(
                             description,
                             style: const TextStyle(fontSize: 18),
-                          ),
+                            textAlign: TextAlign.center,
+                          )),
                           Align(
                               alignment: Alignment.bottomRight,
                               child: Text(cardData[index].editedAt!))

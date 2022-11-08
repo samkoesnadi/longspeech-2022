@@ -9,6 +9,8 @@ import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:flutter_tags/flutter_tags.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sicantik/helpers/document.dart';
 import 'package:sicantik/helpers/notification.dart';
 import 'package:sicantik/screens/home_screen.dart';
@@ -73,12 +75,12 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
         .toList(); // null
 
     Map<String, dynamic> noteMetadata = noteStorage.read(noteId)!;
-    Map<String, dynamic> imageClassifications =
+    Map imageClassifications =
         noteStorage.read("$noteId-imageClassifications") ?? {};
-
     List<CardData> aiAnalysisCardData = [];
-    aiAnalysisCardData.add(
-        CardData(title: "Summary", description: noteMetadata["summarized"]));
+    aiAnalysisCardData.add(CardData(
+        title: "Detected keywords",
+        description: noteStorage.read("$noteId-ners").join(", ")));
     aiAnalysisCardData.add(CardData(
         title: "Detected languages",
         description: detectedLanguages.join(", ")));
@@ -86,12 +88,11 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
         title: "Words count",
         description: noteMetadata["wordCount"].toString()));
     aiAnalysisCardData.add(CardData(
-        title: "Detected key information",
-        description: noteStorage.read("$noteId-ners").join(", ")));
-    aiAnalysisCardData.add(CardData(
         title: "Edited at",
         description:
             dateFormat.format(DateTime.parse(noteMetadata['editedAt']))));
+    aiAnalysisCardData.add(
+        CardData(title: "Summary", description: noteMetadata["summarized"]));
 
     String title = noteMetadata["title"];
     String description = noteMetadata["summarized"];
@@ -102,121 +103,146 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
           return false;
         },
         child: MyScaffold(
-            resizeToAvoidBottomInset: true,
-            backgroundColor: Colors.white,
-            floatingActionButtonIcon: Icons.edit,
-            speedDialOnPress: () async {
-              // set the arguments
-              final dynamic arguments = {"noteId": noteId};
+          resizeToAvoidBottomInset: true,
+          backgroundColor: Colors.white,
+          floatingActionButtonIcon: Icons.edit,
+          speedDialOnPress: () async {
+            // set the arguments
+            final dynamic arguments = {"noteId": noteId};
 
-              await Get.to(() => const NewNoteScreen(), arguments: arguments);
-            },
-            appBarBottom: TabBar(controller: _tabController, tabs: const [
-              Tab(text: "View"),
-              Tab(text: "Analysis/Info"),
-              Tab(text: "Reminders")
-            ]),
-            body: TabBarView(
-              controller: _tabController,
-              children: [
-                // view
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Container(
-                    child: myQuillEditor.generateQuillEditor(
-                        readOnly: true, imageArguments: imageClassifications),
-                  ),
+            await Get.to(() => const NewNoteScreen(), arguments: arguments);
+          },
+          appBarBottom: TabBar(controller: _tabController, tabs: const [
+            Tab(text: "View"),
+            Tab(text: "Analysis/Info"),
+            Tab(text: "Reminders")
+          ]),
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              // view
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Container(
+                  child: myQuillEditor.generateQuillEditor(
+                      readOnly: true, imageArguments: imageClassifications),
                 ),
-                // AI-assist
-                Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Container(
-                        child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            shrinkWrap: true,
-                            itemCount: aiAnalysisCardData.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              String description = "none";
-                              if (aiAnalysisCardData[index].description != "") {
-                                description =
-                                    aiAnalysisCardData[index].description;
-                              }
-                              return Column(children: [
-                                SelectableText(aiAnalysisCardData[index].title,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 24)),
-                                SelectableText(description,
-                                    style: const TextStyle(fontSize: 24)),
-                                const Padding(
-                                    padding: EdgeInsets.only(bottom: 10)),
-                                const Divider(thickness: 5)
-                              ]);
-                            }))),
-                Padding(
-                    padding: const EdgeInsets.all(3.0),
-                    child: Column(children: [
-                      ElevatedButton(
-                          onPressed: () async {
-                            await DatePicker.showDateTimePicker(context,
-                                showTitleActions: true,
-                                minTime: DateTime.now(),
-                                currentTime: DateTime.now(),
-                                onConfirm: (date) async {
-                              int id = await scheduleNotification(
-                                  title,
-                                  description,
-                                  noteId,
-                                  tz.TZDateTime.from(date, tz.local));
-                              await reminderStorage.write(
-                                  id.toString(), date.toString());
-                              reminders.add(Reminder(id: id, datetime: date));
-                            });
-                          },
-                          child: const Text("Add reminder")),
-                      Obx(() {
-                        // Process reminder
-                        List remindersToRemove = [];
+              ),
+              // AI-assist
+              Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Container(
+                      child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          shrinkWrap: true,
+                          itemCount: aiAnalysisCardData.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            String description = "none";
+                            if (aiAnalysisCardData[index].description != "") {
+                              description =
+                                  aiAnalysisCardData[index].description;
+                            }
+                            return Column(children: [
+                              SelectableText(aiAnalysisCardData[index].title,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 24)),
+                              SelectableText(description,
+                                  style: const TextStyle(fontSize: 24),
+                                  textAlign: TextAlign.center),
+                              const Padding(
+                                  padding: EdgeInsets.only(bottom: 10)),
+                              const Divider(thickness: 5)
+                            ]);
+                          }))),
+              Padding(
+                  padding: const EdgeInsets.all(3.0),
+                  child: Column(children: [
+                    ElevatedButton(
+                        onPressed: () async {
+                          await DatePicker.showDateTimePicker(context,
+                              showTitleActions: true,
+                              minTime: DateTime.now(),
+                              currentTime: DateTime.now(),
+                              onConfirm: (date) async {
+                            int id = await scheduleNotification(
+                                title,
+                                description,
+                                noteId,
+                                tz.TZDateTime.from(date, tz.local));
+                            await reminderStorage.write(
+                                id.toString(), date.toString());
+                            reminders.add(Reminder(id: id, datetime: date));
+                          });
+                        },
+                        child: const Text("Add reminder")),
+                    Obx(() {
+                      // Process reminder
+                      List remindersToRemove = [];
 
-                        for (Reminder reminder in reminders) {
-                          if (DateTime.now().isAfter(reminder.datetime!)) {
-                            remindersToRemove.add(reminder.id);
-                          }
+                      for (Reminder reminder in reminders) {
+                        if (DateTime.now().isAfter(reminder.datetime!)) {
+                          remindersToRemove.add(reminder.id);
                         }
+                      }
 
-                        for (int reminderId in remindersToRemove) {
-                          reminders.removeWhere(
-                              (element) => element.id == reminderId);
-                          reminderStorage.remove(reminderId.toString());
-                        }
-                        noteStorage.write("$noteId-reminders",
-                            reminders.map((element) => element.id).toList());
+                      for (int reminderId in remindersToRemove) {
+                        reminders
+                            .removeWhere((element) => element.id == reminderId);
+                        reminderStorage.remove(reminderId.toString());
+                      }
+                      noteStorage.write("$noteId-reminders",
+                          reminders.map((element) => element.id).toList());
 
-                        return Tags(
-                          itemCount: reminders.length, // required
-                          itemBuilder: (int index) {
-                            final item = reminders[index];
+                      return Tags(
+                        itemCount: reminders.length, // required
+                        itemBuilder: (int index) {
+                          final item = reminders[index];
 
-                            return ItemTags(
-                                textColor: Colors.white,
-                                color: Colors.blueGrey,
-                                index: index,
-                                title: dateFormat.format(item.datetime),
-                                removeButton: ItemTagsRemoveButton(
-                                  onRemoved: () {
-                                    removeNotification(reminders[index].id);
-                                    reminderStorage
-                                        .remove(reminders[index].id.toString());
-                                    reminders.removeAt(index);
-                                    return true;
-                                  },
-                                ));
-                          },
-                        );
-                      })
-                    ])),
-              ],
-            ),
-            title: Text(title)));
+                          return ItemTags(
+                              textColor: Colors.white,
+                              color: Colors.blueGrey,
+                              index: index,
+                              title: dateFormat.format(item.datetime),
+                              removeButton: ItemTagsRemoveButton(
+                                onRemoved: () {
+                                  removeNotification(reminders[index].id);
+                                  reminderStorage
+                                      .remove(reminders[index].id.toString());
+                                  reminders.removeAt(index);
+                                  return true;
+                                },
+                              ));
+                        },
+                      );
+                    })
+                  ])),
+            ],
+          ),
+          title: Text(title),
+          appBarActions: [
+            IconButton(
+                onPressed: () async {
+                  final appDocDir = await getApplicationDocumentsDirectory();
+                  final generatedPdfFile = await exportToPDF(
+                      _quillController.document.toDelta().toJson(),
+                      appDocDir.path,
+                      "$title from Expressive App");
+
+                  final box = context.findRenderObject() as RenderBox?;
+
+                  await Share.shareXFiles(
+                    [XFile(generatedPdfFile.path)],
+                    subject: title,
+                    text: "Created by Expressive App: $title - $description",
+                    sharePositionOrigin:
+                        box!.localToGlobal(Offset.zero) & box.size,
+                  );
+
+                  generatedPdfFile.delete();
+                },
+                icon: const Icon(Icons.share))
+          ],
+        ));
   }
 }

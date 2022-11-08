@@ -3,12 +3,15 @@ import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:logger/logger.dart';
+import 'package:english_words/english_words.dart' as ew;
 
 var logger = Logger(
   printer: PrettyPrinter(),
 );
 
-DateFormat dateFormat = DateFormat("yyyy-MM-dd HH:mm");
+DateFormat dateFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+const allPossibleSymbols = "!'§<>|\$%&/()=?\\`´+*#öäüÜÖÄ,.-;:_^{}[]";
+var commonEnglishWords = ew.all + ["has", "had", "been", "was"];
 
 class CardData {
   String title;

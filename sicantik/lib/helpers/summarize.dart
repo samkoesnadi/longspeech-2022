@@ -3,21 +3,35 @@ import 'package:document_analysis/document_analysis.dart';
 import 'package:scidart/numdart.dart';
 import 'package:sicantik/helpers/matrix_creator.dart';
 import 'package:sicantik/utils.dart';
-import 'package:stemmer/stemmer.dart';
 
-String summarize({required String paragraph, int amountOfSentences = 10}) {
+Map<String, dynamic> summarize(
+    {required String paragraph, int amountOfSentences = 10}) {
   logger.d("Summarize: $paragraph");
 
   List<String> docs = splitIntoSentences(paragraph);
 
   if (docs.isEmpty) {
-    return "";
+    return {"summarized": "", "keywords": []};
   }
 
-  PorterStemmer stemmer = PorterStemmer();
   TokenizationOutput tokenOut = TokenizationOutput();
-  List<List<double?>> tfidf =
-      myHybridTfIdfMatrix(docs, stemmer: stemmer.stem, tokenOut: tokenOut);
+  List<List<double?>> tfidf = myHybridTfIdfMatrix(docs, tokenOut: tokenOut);
+
+  List keywordsCandidates = [];
+  tokenOut.bagOfWords.forEach((key, value) {
+    if (!commonEnglishWords.contains(key)) {
+      keywordsCandidates.add([key, value]);
+    }
+  });
+
+  keywordsCandidates
+      .sort((elemTwo, elemOne) => elemOne[1].compareTo(elemTwo[1]));
+
+  if (keywordsCandidates.length > amountOfSentences) {
+    keywordsCandidates = keywordsCandidates.sublist(0, amountOfSentences);
+  }
+  List keywords =
+      keywordsCandidates.map((elem) => elem[0]).toList().cast<String>();
 
   List<Array> inp =
       tfidf.map((elem) => Array(elem.map((x) => x!).toList())).toList();
@@ -47,18 +61,18 @@ String summarize({required String paragraph, int amountOfSentences = 10}) {
     if (thresholdProbability <= ranks[i]) {
       docs[i] = docs[i].trim();
 
-      if (docs[i][docs[i].length - 1] == '.') {
-        docs[i] = docs[i].substring(0, docs[i].length - 1).trim();
+      if (!allPossibleSymbols.contains(docs[i][docs[i].length - 1])) {
+        docs[i] = "${docs[i].trim()}.";
       }
 
-      summarized += ' ${docs[i]}.';
+      summarized += "${docs[i]} ";
     }
   }
 
-  return summarized;
+  return {"summarized": summarized, "keywords": keywords};
 }
 
-List<String> splitIntoSentences(String text) {
+List<String> splitIntoSentences(String text, {int minLength = 5}) {
   const alphabets = "([A-Za-z])";
   const prefixes = "(Mr|St|Mrs|Ms|Dr)[.]";
   const suffixes = "(Inc|Ltd|Jr|Sr|Co)";
@@ -69,7 +83,7 @@ List<String> splitIntoSentences(String text) {
   const digits = "([0-9])";
 
   text = " " + text + "  ";
-  text = text.replaceAll("\n", " ");
+  text = text.replaceAll("\n", ".");
   text = text.replaceAllMapped(
       RegExp(digits + "[.]" + digits), (Match m) => "${m[1]}<prd>${m[2]}");
   text = text.replaceAllMapped(RegExp(prefixes), (Match m) => "${m[1]}<prd>");
@@ -100,14 +114,14 @@ List<String> splitIntoSentences(String text) {
   text = text.replaceAll("<prd>", ".");
   text += "<stop>";
   List<String> sentences = text.split("<stop>");
-  sentences.removeLast();
+  // sentences.removeLast();
   sentences = sentences
       .map((e) => e
           .replaceAll(
-              RegExp(r"[^\w !'§<>|\''\$%&\/()=?\\`´+*#öäüÜÖÄ,.\-;:_^{}\[\]]"),
-              "")
+              RegExp(r"[^\w !'§<>|$%&/()=?\\`´+*#öäüÜÖÄ,.\-;:_^{}\[\]]"), "")
           .trim())
       .toList();
-  sentences.removeWhere((element) => element == "");
+  sentences
+      .removeWhere((element) => element == "" || element.length < minLength);
   return sentences;
 }

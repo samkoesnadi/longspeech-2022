@@ -3,11 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:delta_to_html/delta_to_html.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html_to_pdf/flutter_html_to_pdf.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:google_mlkit_entity_extraction/google_mlkit_entity_extraction.dart';
 import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -16,23 +17,23 @@ import 'package:sicantik/helpers/summarize.dart';
 import 'package:sicantik/utils.dart';
 import 'package:tuple/tuple.dart';
 
-Map entityExtractionLanguageMap = {
-  "en": EntityExtractorLanguage.english,
-  "zh": EntityExtractorLanguage.chinese,
-  "ar": EntityExtractorLanguage.arabic,
-  "nl": EntityExtractorLanguage.dutch,
-  "fr": EntityExtractorLanguage.french,
-  "de": EntityExtractorLanguage.german,
-  "it": EntityExtractorLanguage.italian,
-  "ja": EntityExtractorLanguage.japanese,
-  "ko": EntityExtractorLanguage.korean,
-  "pl": EntityExtractorLanguage.polish,
-  "pt": EntityExtractorLanguage.portuguese,
-  "ru": EntityExtractorLanguage.russian,
-  "es": EntityExtractorLanguage.spanish,
-  "th": EntityExtractorLanguage.thai,
-  "tr": EntityExtractorLanguage.turkish
-};
+// Map entityExtractionLanguageMap = {
+//   "en": EntityExtractorLanguage.english,
+//   "zh": EntityExtractorLanguage.chinese,
+//   "ar": EntityExtractorLanguage.arabic,
+//   "nl": EntityExtractorLanguage.dutch,
+//   "fr": EntityExtractorLanguage.french,
+//   "de": EntityExtractorLanguage.german,
+//   "it": EntityExtractorLanguage.italian,
+//   "ja": EntityExtractorLanguage.japanese,
+//   "ko": EntityExtractorLanguage.korean,
+//   "pl": EntityExtractorLanguage.polish,
+//   "pt": EntityExtractorLanguage.portuguese,
+//   "ru": EntityExtractorLanguage.russian,
+//   "es": EntityExtractorLanguage.spanish,
+//   "th": EntityExtractorLanguage.thai,
+//   "tr": EntityExtractorLanguage.turkish
+// };
 
 Future<void> saveDocument(
     String noteId,
@@ -111,16 +112,21 @@ Future<void> saveStarred(bool isStarred, String noteId) async {
 
 Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   String summarized = "";
+  List<String> entities = [];
+
   try {
     Fluttertoast.showToast(msg: "Summarizing...");
-    summarized = summarize(paragraph: plainText, amountOfSentences: 15);
+    Map summarizedAndEntities = summarize(paragraph: plainText, amountOfSentences: 5);
+    summarized = summarizedAndEntities["summarized"];
+    entities = summarizedAndEntities["keywords"];
   } catch (e) {
     logger.e(e);
   }
 
   //// Identify text language
+  Fluttertoast.cancel();
   Fluttertoast.showToast(msg: "Identifying language...");
-  final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.5);
+  final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.1);
   final List<IdentifiedLanguage> possibleLanguages =
       await languageIdentifier.identifyPossibleLanguages(summarized);
   List<String> detectedLanguages = [];
@@ -130,35 +136,36 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   languageIdentifier.close();
 
   //// Identify ner
-  List<String> entities = [];
-  for (String detectedLanguage in detectedLanguages) {
-    if (entityExtractionLanguageMap.containsKey(detectedLanguage)) {
-      EntityExtractorLanguage entityExtractorLanguage =
-          entityExtractionLanguageMap[detectedLanguage];
-
-      Fluttertoast.showToast(
-          msg:
-              "Extracting entity for ${entityExtractorLanguage.toString().split('.').last}...");
-      final entityExtractor =
-          EntityExtractor(language: entityExtractorLanguage);
-
-      try {
-        final List<EntityAnnotation> annotations =
-            await entityExtractor.annotateText(summarized);
-        entityExtractor.close();
-
-        for (final annotation in annotations) {
-          // Only take the first entity type for simplicity
-          entities
-              .add("${annotation.entities[0].type.name}: ${annotation.text}");
-        }
-      } catch (e) {
-        Fluttertoast.showToast(
-            msg:
-                "Connect to internet if you want proper entity extraction result");
-      }
-    }
-  }
+  // for (String detectedLanguage in detectedLanguages) {
+  //   if (entityExtractionLanguageMap.containsKey(detectedLanguage)) {
+  //     EntityExtractorLanguage entityExtractorLanguage =
+  //         entityExtractionLanguageMap[detectedLanguage];
+  //
+  //     Fluttertoast.cancel();
+  //     Fluttertoast.showToast(
+  //         msg:
+  //             "Extracting entity for ${entityExtractorLanguage.toString().split('.').last}...");
+  //     final entityExtractor =
+  //         EntityExtractor(language: entityExtractorLanguage);
+  //
+  //     try {
+  //       final List<EntityAnnotation> annotations =
+  //           await entityExtractor.annotateText(summarized);
+  //       entityExtractor.close();
+  //
+  //       for (final annotation in annotations) {
+  //         // Only take the first entity type for simplicity
+  //         entities
+  //             .add("${annotation.entities[0].type.name}: ${annotation.text}");
+  //       }
+  //     } catch (e) {
+  //       Fluttertoast.cancel();
+  //       Fluttertoast.showToast(
+  //           msg:
+  //               "Connect to internet if you want proper entity extraction result");
+  //     }
+  //   }
+  // }
 
   // Count word
   int wordCount = RegExp(r"\w+").allMatches(plainText).length;
@@ -192,7 +199,7 @@ class MyQuillEditor {
   QuillEditor generateQuillEditor(
       {bool readOnly = false,
       void Function(String)? onImageRemove,
-      dynamic imageArguments}) {
+      Map? imageArguments}) {
     return QuillEditor(
       controller: quillController,
       scrollController: ScrollController(),
@@ -223,4 +230,18 @@ class MyQuillEditor {
       ],
     );
   }
+}
+
+Future<File> exportToPDF(List json, String dirPath, String fileName) async {
+  String htmlContent = DeltaToHTML.encodeJson(json);
+  htmlContent =
+      htmlContent.replaceAll("src='/", "src='file:///");
+
+  final appDocDir = await getApplicationDocumentsDirectory();
+
+  var generatedPdfFile =
+      await FlutterHtmlToPdf.convertFromHtmlContent(htmlContent,
+      appDocDir.path, fileName);
+
+  return generatedPdfFile;
 }

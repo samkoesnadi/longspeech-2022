@@ -97,7 +97,7 @@ class _SimpleDialogItem extends StatelessWidget {
 
 class MyImageEmbedBuilder implements EmbedBuilder {
   void Function(String)? onRemove;
-  dynamic imageArguments;
+  Map? imageArguments;
 
   MyImageEmbedBuilder({this.onRemove, this.imageArguments});
 
@@ -115,7 +115,7 @@ class MyImageEmbedBuilder implements EmbedBuilder {
 
     List<String> detectedObjects = [];
     if (imageArguments != null) {
-      detectedObjects = imageArguments[imageUrl];
+      detectedObjects = imageArguments![imageUrl]!.cast<String>();
     }
     if (detectedObjects.isEmpty) {
       detectedObjects = ["none"];
@@ -259,7 +259,7 @@ class MyImageEmbedBuilder implements EmbedBuilder {
 class FlutterQuillEmbeds {
   static List<EmbedBuilder> builders(
           {void Function(GlobalKey videoContainerKey)? onVideoInit,
-          void Function(String)? onImageRemove, dynamic imageArguments}) =>
+          void Function(String)? onImageRemove, Map? imageArguments}) =>
       [
         MyImageEmbedBuilder(onRemove: onImageRemove, imageArguments: imageArguments),
         VideoEmbedBuilder(onVideoInit: onVideoInit),
@@ -286,7 +286,7 @@ class FlutterQuillEmbeds {
               iconSelectedColor: iconTheme?.iconSelectedColor,
               iconUnselectedColor: iconTheme?.iconUnselectedColor,
               iconSelectedFillColor: iconTheme?.iconSelectedFillColor,
-              iconUnselectedFillColor: Colors.lightGreenAccent,
+              iconUnselectedFillColor: iconTheme?.iconUnselectedFillColor,
               disabledIconColor: iconTheme?.disabledIconColor,
               disabledIconFillColor: iconTheme?.disabledIconFillColor,
               borderRadius: iconTheme?.borderRadius);
@@ -321,7 +321,7 @@ class FlutterQuillEmbeds {
               iconSelectedColor: iconTheme?.iconSelectedColor,
               iconUnselectedColor: iconTheme?.iconUnselectedColor,
               iconSelectedFillColor: iconTheme?.iconSelectedFillColor,
-              iconUnselectedFillColor: Colors.lightGreenAccent,
+              iconUnselectedFillColor: iconTheme?.iconUnselectedFillColor,
               disabledIconColor: iconTheme?.disabledIconColor,
               disabledIconFillColor: iconTheme?.disabledIconFillColor,
               borderRadius: iconTheme?.borderRadius);

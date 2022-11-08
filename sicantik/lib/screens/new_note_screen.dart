@@ -9,6 +9,7 @@ import 'package:flutter_quill_extensions/embeds/widgets/image.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
@@ -76,15 +77,27 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
         onWillPop: () async {
+
           await Alert(
               context: context,
               style: const AlertStyle(isOverlayTapDismiss: false),
               title: "What should we do with this document, boss?",
               buttons: [
                 DialogButton(
-                    child: const Text("Cancel"), onPressed: () => Get.back()),
+                    child: Text("Cancel",
+                        style: TextStyle(
+                            color: Theme.of(context)
+                                .primaryTextTheme
+                                .headline1
+                                ?.color)),
+                    onPressed: () => Get.back()),
                 DialogButton(
-                    child: const Text("Discard"),
+                    child: Text("Discard",
+                        style: TextStyle(
+                            color: Theme.of(context)
+                                .primaryTextTheme
+                                .headline1
+                                ?.color)),
                     onPressed: () {
                       Get.back();
                       if (noteStorage.hasData(noteId)) {
@@ -95,16 +108,24 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                       }
                     }),
                 DialogButton(
-                    child: const Text("Save"),
+                    child: Text("Save",
+                        style: TextStyle(
+                            color: Theme.of(context)
+                                .primaryTextTheme
+                                .headline1
+                                ?.color)),
                     onPressed: () async {
                       Get.back();
+                      context.loaderOverlay.show();
                       await saveDocument(
                           noteId,
                           _titleController.text,
                           _quillController.document,
                           isStarred,
                           imageClassifications);
+                      Fluttertoast.cancel();
                       Fluttertoast.showToast(msg: "The document is saved");
+                      context.loaderOverlay.hide();
                       Get.off(() => const ViewNoteScreen(),
                           arguments: {"noteId": noteId});
                     })
@@ -162,6 +183,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                         isStarred,
                         imageClassifications);
 
+                    Fluttertoast.cancel();
                     Fluttertoast.showToast(msg: "The document is saved");
                   },
                   icon: const Icon(Icons.save))
@@ -217,6 +239,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
       toolbarIconSize: 21,
       controller: _quillController,
       embedButtons: FlutterQuillEmbeds.buttons(
+            showFormulaButton: true,
             // provide a callback to enable picking images from device.
             // if omit, "image" button only allows adding images from url.
             // same goes for videos.
@@ -236,7 +259,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                 highlightElevation: 0,
                 hoverElevation: 0,
                 size: toolbarIconSize * 1.77,
-                fillColor: Colors.lightGreenAccent,
+                fillColor: iconTheme?.iconUnselectedFillColor,
                 borderRadius: iconTheme?.borderRadius ?? 2,
                 onPressed: () async {
                   final controller = _quillController;

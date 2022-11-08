@@ -10,7 +10,7 @@ FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 void onDidReceiveNotificationResponse(NotificationResponse details) {
-  Get.to(() => ViewNoteScreen(), arguments: {"noteId": details.payload});
+  Get.to(() => const ViewNoteScreen(), arguments: {"noteId": details.payload});
 }
 
 Future initLocalNotification() async {
@@ -36,7 +36,6 @@ Future initLocalNotification() async {
               onDidReceiveNotificationResponse)
       .then((_) {
     logger.d("LocalNotification setup successfully");
-
   }).catchError((Object error) {
     logger.e("Error: $error");
   });
@@ -53,7 +52,7 @@ Future<int> scheduleNotification(
       datetime,
       const NotificationDetails(
           android: AndroidNotificationDetails(
-              'note reminders 000', 'note reminders')),
+              'note reminders 000', 'note reminders', fullScreenIntent: true)),
       payload: noteId,
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:

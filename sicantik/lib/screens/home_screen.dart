@@ -36,7 +36,7 @@ Set<int> search(List<String> input, String searchKey) {
 class HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchTextController =
-      TextEditingController(text: "");
+  TextEditingController(text: "");
   String titleText = "title".tr;
   final noteStorage = GetStorage("notes");
   List<CardData> fullCardData = [];
@@ -50,7 +50,7 @@ class HomeScreenState extends State<HomeScreen> {
       } else {
         List<String> allTitle = fullCardData.map((e) => e.title).toList();
         List<String> allDescription =
-            fullCardData.map((e) => e.description).toList();
+        fullCardData.map((e) => e.description).toList();
 
         Set<int> searchResult = search(allTitle, _searchTextController.text);
         searchResult.addAll(search(allDescription, _searchTextController.text));
@@ -70,7 +70,9 @@ class HomeScreenState extends State<HomeScreen> {
       Map<String, dynamic> note = noteStorage.read(noteId);
       List<Widget> trailing = [];
       trailing.add(StarButton(
-          iconColor: Theme.of(context).primaryColor,
+          iconColor: Theme
+              .of(context)
+              .primaryColor,
           valueChanged: (isStarred) async {
             await saveStarred(isStarred, noteId);
           },
@@ -88,16 +90,23 @@ class HomeScreenState extends State<HomeScreen> {
                   })
             ]).show();
           },
-          icon: Icon(Icons.delete, color: Theme.of(context).primaryColor)));
+          icon: Icon(Icons.delete, color: Theme
+              .of(context)
+              .primaryColor)));
       String summarized = note["summarized"];
-      const summarizedMaxLength = 30;
+      String title = note["title"];
+      const summarizedMaxLength = 200;
+      const titleMaxLength = 20;
 
       if (summarized.length > summarizedMaxLength) {
         summarized = "${summarized.substring(0, summarizedMaxLength)}...";
       }
+      if (title.length > titleMaxLength) {
+        title = "${title.substring(0, titleMaxLength)}...";
+      }
       fullCardData.add(CardData(
           noteId: noteId,
-          title: note["title"],
+          title: title,
           description: summarized,
           onTap: () async {
             await Get.to(() => const ViewNoteScreen(),
@@ -120,7 +129,9 @@ class HomeScreenState extends State<HomeScreen> {
         return generateListView(
             scrollController: _scrollController,
             cardData: cardData,
-            cardDividerColor: Theme.of(context).primaryColor);
+            cardDividerColor: Theme
+                .of(context)
+                .primaryColor);
       }),
       title: Text(
         titleText,
@@ -130,22 +141,29 @@ class HomeScreenState extends State<HomeScreen> {
       speedDialOnPress: () async {
         await Get.to(() => const NewNoteScreen());
       },
+      appBarActions: [
+        StreamBuilder(builder: (context, snapshot) {
+          return Center(
+              child: Text(dateFormat.format(DateTime.now()), style: TextStyle(fontWeight: FontWeight.bold))
+          );
+        }, stream: Stream.periodic(const Duration(seconds: 1)))
+      ],
       bottomNavigationBarChildren: [
         Expanded(
             child: ListTile(
-          leading: const Icon(Icons.search),
-          title: TextField(
-              maxLength: 20,
-              controller: _searchTextController,
-              decoration: const InputDecoration(
-                hintText: "search note...",
-                hintStyle: TextStyle(
-                  fontStyle: FontStyle.italic,
-                ),
-                border: InputBorder.none,
-                counterText: "",
-              )),
-        ))
+              leading: const Icon(Icons.search),
+              title: TextField(
+                  maxLength: 20,
+                  controller: _searchTextController,
+                  decoration: const InputDecoration(
+                    hintText: "search note...",
+                    hintStyle: TextStyle(
+                      fontStyle: FontStyle.italic,
+                    ),
+                    border: InputBorder.none,
+                    counterText: "",
+                  )),
+            ))
       ],
     );
   }

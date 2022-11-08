@@ -1,11 +1,10 @@
 import 'dart:io' as io;
 
 import 'package:flutter/services.dart';
+import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:sicantik/utils.dart';
-
 
 late ImageLabeler imageLabeler;
 
@@ -27,7 +26,8 @@ Future<String> getModel(String assetPath) async {
 Future initializeImageLabeler() async {
   const path = 'assets/ml/object_labeler.tflite';
   final modelPath = await getModel(path);
-  final options = LocalLabelerOptions(modelPath: modelPath);
+  final options = LocalLabelerOptions(
+      confidenceThreshold: 0.1, maxCount: 30, modelPath: modelPath);
   imageLabeler = ImageLabeler(options: options);
 
   logger.d("ImageLabeler setup successfully");
