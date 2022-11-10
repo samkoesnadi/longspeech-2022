@@ -12,6 +12,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -162,14 +163,17 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
             await Get.to(() => const NewNoteScreen(), arguments: arguments);
           },
           appBarKey: appBarGlobalKey,
-          appBarBottom: TabBar(key: tabBarGlobalKey, controller: _tabController, tabs: [
-            Tab(text: "View"),
-            Tab(text: "Analysis/Info"),
-            Tab(text: "Reminders")
-          ]),
+          appBarBottom: TabBar(
+              key: tabBarGlobalKey,
+              controller: _tabController,
+              tabs: [
+                Tab(text: "View"),
+                Tab(text: "Analysis/Info"),
+                Tab(text: "Reminders")
+              ]),
           body: BubbleShowcaseViewNoteWidget(
               tabBarGlobalKey: tabBarGlobalKey,
-            appBarGlobalKey: appBarGlobalKey,
+              appBarGlobalKey: appBarGlobalKey,
               child: TabBarView(
                 controller: _tabController,
                 children: [
@@ -185,95 +189,106 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
                   Padding(
                       padding: const EdgeInsets.all(10),
                       child: Container(
-                          child: ListView.builder(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              shrinkWrap: true,
-                              itemCount: aiAnalysisCardData.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                String description = "none";
-                                if (aiAnalysisCardData[index].description !=
-                                    "") {
-                                  description =
-                                      aiAnalysisCardData[index].description;
-                                }
-                                return Column(children: [
-                                  SelectableText(
-                                      aiAnalysisCardData[index].title,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16)),
-                                  const Padding(
-                                      padding: EdgeInsets.only(bottom: 3)),
-                                  SelectableText(description,
-                                      style: const TextStyle(fontSize: 16),
-                                      textAlign: TextAlign.center),
-                                  const Padding(
-                                      padding: EdgeInsets.only(bottom: 20)),
-                                ]);
-                              }))),
+                          child: Padding(
+                              padding: EdgeInsets.only(top: 10),
+                              child: ListView.builder(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  shrinkWrap: true,
+                                  itemCount: aiAnalysisCardData.length,
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                    String description = "none";
+                                    if (aiAnalysisCardData[index].description !=
+                                        "") {
+                                      description =
+                                          aiAnalysisCardData[index].description;
+                                    }
+                                    return Column(children: [
+                                      SelectableText(
+                                          aiAnalysisCardData[index].title,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16)),
+                                      const Padding(
+                                          padding: EdgeInsets.only(bottom: 3)),
+                                      SelectableText(description,
+                                          style: const TextStyle(fontSize: 16),
+                                          textAlign: TextAlign.center),
+                                      const Padding(
+                                          padding: EdgeInsets.only(bottom: 20)),
+                                    ]);
+                                  })))),
                   Padding(
                       padding: const EdgeInsets.all(10),
-                      child: Column(children: [
-                        ElevatedButton(
-                            onPressed: () async {
-                              await DatePicker.showDateTimePicker(context,
-                                  showTitleActions: true,
-                                  minTime: DateTime.now(),
-                                  currentTime: DateTime.now(),
-                                  onConfirm: (date) async {
-                                int id = await scheduleNotification(
-                                    title,
-                                    description,
-                                    noteId,
-                                    tz.TZDateTime.from(date, tz.local));
-                                await reminderStorage.write(
-                                    id.toString(), date.toString());
-                                reminders.add(Reminder(id: id, datetime: date));
-                              });
-                            },
-                            child: const Text("Add reminder")),
-                        Obx(() {
-                          // Process reminder
-                          List remindersToRemove = [];
+                      child: Padding(
+                          padding: EdgeInsets.only(top: 10),
+                          child: Column(children: [
+                            ElevatedButton(
+                                onPressed: () async {
+                                  await DatePicker.showDateTimePicker(context,
+                                      showTitleActions: true,
+                                      minTime: DateTime.now(),
+                                      currentTime: DateTime.now(),
+                                      onConfirm: (date) async {
+                                    int id = await scheduleNotification(
+                                        title,
+                                        description,
+                                        noteId,
+                                        tz.TZDateTime.from(date, tz.local));
+                                    await reminderStorage.write(
+                                        id.toString(), date.toString());
+                                    reminders
+                                        .add(Reminder(id: id, datetime: date));
+                                  });
+                                },
+                                child: const Text("Add reminder")),
+                            Obx(() {
+                              // Process reminder
+                              List remindersToRemove = [];
 
-                          for (Reminder reminder in reminders) {
-                            if (DateTime.now().isAfter(reminder.datetime!)) {
-                              remindersToRemove.add(reminder.id);
-                            }
-                          }
+                              for (Reminder reminder in reminders) {
+                                if (DateTime.now()
+                                    .isAfter(reminder.datetime!)) {
+                                  remindersToRemove.add(reminder.id);
+                                }
+                              }
 
-                          for (int reminderId in remindersToRemove) {
-                            reminders.removeWhere(
-                                (element) => element.id == reminderId);
-                            reminderStorage.remove(reminderId.toString());
-                          }
-                          noteStorage.write("$noteId-reminders",
-                              reminders.map((element) => element.id).toList());
+                              for (int reminderId in remindersToRemove) {
+                                reminders.removeWhere(
+                                    (element) => element.id == reminderId);
+                                reminderStorage.remove(reminderId.toString());
+                              }
+                              noteStorage.write(
+                                  "$noteId-reminders",
+                                  reminders
+                                      .map((element) => element.id)
+                                      .toList());
 
-                          return Tags(
-                            itemCount: reminders.length, // required
-                            itemBuilder: (int index) {
-                              final item = reminders[index];
+                              return Tags(
+                                itemCount: reminders.length, // required
+                                itemBuilder: (int index) {
+                                  final item = reminders[index];
 
-                              return ItemTags(
-                                  textColor: Colors.white,
-                                  color: Colors.blueGrey,
-                                  index: index,
-                                  title: dateFormat.format(item.datetime),
-                                  removeButton: ItemTagsRemoveButton(
-                                    onRemoved: () {
-                                      removeNotification(reminders[index].id);
-                                      reminderStorage.remove(
-                                          reminders[index].id.toString());
-                                      reminders.removeAt(index);
-                                      return true;
-                                    },
-                                  ));
-                            },
-                          );
-                        })
-                      ])),
+                                  return ItemTags(
+                                      textColor: Colors.white,
+                                      color: Colors.blueGrey,
+                                      index: index,
+                                      title: dateFormat.format(item.datetime),
+                                      removeButton: ItemTagsRemoveButton(
+                                        onRemoved: () {
+                                          removeNotification(
+                                              reminders[index].id);
+                                          reminderStorage.remove(
+                                              reminders[index].id.toString());
+                                          reminders.removeAt(index);
+                                          return true;
+                                        },
+                                      ));
+                                },
+                              );
+                            })
+                          ]))),
                 ],
               )),
           title: Text(title),
@@ -281,8 +296,10 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
             IconButton(
                 onPressed: () async {
                   String? downloadDirectory = await getDownloadPath();
+                  context.loaderOverlay.show();
                   File PDFPath = await exportToPdf(downloadDirectory!, title);
-                  Fluttertoast.showToast(
+                  context.loaderOverlay.hide();
+                  await Fluttertoast.showToast(
                       msg:
                           "PDF is stored in local storage's Download: ${basename(PDFPath.path)}",
                       toastLength: Toast.LENGTH_LONG);
@@ -291,9 +308,10 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
             IconButton(
                 onPressed: () async {
                   final box = context.findRenderObject() as RenderBox?;
-
+                  context.loaderOverlay.show();
                   File PDFPath = await exportToPdf(
                       (await getApplicationDocumentsDirectory()).path, title);
+                  context.loaderOverlay.hide();
                   await Share.shareXFiles(
                     [XFile(PDFPath.path)],
                     subject: title,
@@ -310,12 +328,10 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
   }
 
   Future<File> exportToPdf(String directory, String title) async {
-    print(directory);
     final generatedPdfFile = await exportToPDF(
         _quillController.document.toDelta().toJson(),
         directory,
         "$title from Expressive App");
-    print(generatedPdfFile.path);
     return generatedPdfFile;
   }
 }

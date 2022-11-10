@@ -65,15 +65,22 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                 DialogButton(
                     child: const Text("OK"),
                     onPressed: () async {
+                      context.loaderOverlay.show();
+
                       await commonStorage.write(
                           "inkRecognitionLanguage", selectedLanguageCode);
-                      context.loaderOverlay.show();
-                      final DigitalInkRecognizerModelManager _modelManager =
-                          DigitalInkRecognizerModelManager();
 
-                      Fluttertoast.showToast(
-                          msg: "Download ink recognizer model");
-                      bool success = await _modelManager
+                      final DigitalInkRecognizerModelManager modelManager =
+                        DigitalInkRecognizerModelManager();
+
+                      bool downloaded = await modelManager.isModelDownloaded(selectedLanguageCode);
+                      if (!downloaded) {
+                        await Fluttertoast.showToast(
+                            msg: "Downloading ink recognizer model",
+                            toastLength: Toast.LENGTH_SHORT);
+                      }
+
+                      bool success = await modelManager
                           .downloadModel(selectedLanguageCode);
                       if (success) {
                         final DigitalInkRecognizer _digitalInkRecognizer =
@@ -96,7 +103,7 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                         }
 
                         await Fluttertoast.cancel();
-                        Fluttertoast.showToast(
+                        await Fluttertoast.showToast(
                             msg: toastText, toastLength: Toast.LENGTH_LONG);
 
                         await commonStorage.write(
@@ -105,7 +112,7 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                         _digitalInkRecognizer.close();
                       } else {
                         await Fluttertoast.cancel();
-                        Fluttertoast.showToast(
+                        await Fluttertoast.showToast(
                             msg: "Ink recognizer model cannot be downloaded");
                       }
                       context.loaderOverlay.hide();

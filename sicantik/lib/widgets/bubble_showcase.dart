@@ -34,7 +34,10 @@ class BubbleShowcaseHomeScreenWidget extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(10),
                       child: Text(
-                          'Notes are great when the canvas supports your creativity',
+                        'Hello,\n\nMy name is Samuel Matthew Koesnadi, the Expressive app author.\n\n'
+                          'I am now going to give you a quick walk through the app :D\n\n'
+                          'We will learn how to use this App to allow your productivity and creativity to shine! And yes, also with the aid of AI ;) \n\n\n'
+                          'With love, Samuel.',
                           style: TextStyle(color: Colors.white),
                           textAlign: TextAlign.center),
                     ),
@@ -93,7 +96,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
-                            "Here are the tools for your creativity, whether it is changing font, color, size, or even creating list, checkboxes, or hyperlink. We got you covered",
+                            "Here are the tools for your creativity, whether it is changing font, color, size, or even creating list, checkboxes, or hyperlink. I got you covered",
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center),
                       ))),
@@ -135,7 +138,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                         padding: const EdgeInsets.all(1),
                         child: Text(
                             "Try out using speech recognition to write with your voice\n"
-                            "Or just simply record voices of any presentation or lecture, maybe?",
+                            "Or you want to simply record voices of any presentation or lecture, maybe?",
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center),
                       ))),
@@ -175,7 +178,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Text(
-                            "Have fun :D\n\nWith love,\nSamuel Matthew Koesnadi, the Expressive app author",
+                            "Have fun and good luck with your productivity :D",
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center),
                       ))),

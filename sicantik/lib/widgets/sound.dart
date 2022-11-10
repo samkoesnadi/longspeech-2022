@@ -221,9 +221,6 @@ class PlayerSoundRecorder {
       filePath = "$filePath${ext[_codec.index]}";
 
       var codec = _codec;
-      print(playerModule.isStopped);
-      print(playerModule.isBlank);
-      print(playerModule.isOpen());
       if (playerModule.isPaused) {
         await playerModule.resumePlayer();
       }

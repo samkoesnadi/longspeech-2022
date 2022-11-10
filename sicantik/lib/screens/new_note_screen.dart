@@ -135,7 +135,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                           voiceRecordings,
                           videos);
                       Fluttertoast.cancel();
-                      Fluttertoast.showToast(msg: "The document is saved");
+                      await Fluttertoast.showToast(msg: "The document is saved");
                       context.loaderOverlay.hide();
                       Get.off(() => const ViewNoteScreen(),
                           arguments: {"noteId": noteId});
@@ -199,7 +199,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                         videos);
 
                     Fluttertoast.cancel();
-                    Fluttertoast.showToast(msg: "The document is saved");
+                    await Fluttertoast.showToast(msg: "The document is saved");
                   },
                   icon: const Icon(Icons.save))
             ]));
@@ -239,7 +239,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
     String localPath = copiedFile.path.toString();
 
     imageClassifications[standardizeImageUrl(localPath)] = detectedObjects;
-    Fluttertoast.showToast(msg: toastText, toastLength: Toast.LENGTH_LONG);
+    await Fluttertoast.showToast(msg: toastText, toastLength: Toast.LENGTH_LONG);
 
     return localPath;
   }

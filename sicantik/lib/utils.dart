@@ -99,7 +99,7 @@ Future<String?> getDownloadPath() async {
       if (!await directory.exists()) directory = await getExternalStorageDirectory();
     }
   } catch (err, stack) {
-    print("Cannot get download folder path");
+    logger.e("Cannot get download folder path");
   }
   return directory?.path;
 }

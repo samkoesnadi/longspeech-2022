@@ -175,7 +175,7 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   List<String> entities = [];
 
   try {
-    Fluttertoast.showToast(msg: "Summarizing...");
+    await Fluttertoast.showToast(msg: "Summarizing...");
     Map summarizedAndEntities =
         summarize(paragraph: plainText, amountOfSentences: 15);
     summarized = summarizedAndEntities["summarized"];
@@ -186,7 +186,7 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
 
   //// Identify text language
   await Fluttertoast.cancel();
-  Fluttertoast.showToast(msg: "Identifying language...");
+  await Fluttertoast.showToast(msg: "Identifying language...");
   final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.1);
   final List<IdentifiedLanguage> possibleLanguages =
       await languageIdentifier.identifyPossibleLanguages(summarized);
@@ -204,7 +204,7 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   //         entityExtractionLanguageMap[detectedLanguage];
   //
   //     Fluttertoast.cancel();
-  //     Fluttertoast.showToast(
+  //     await Fluttertoast.showToast(
   //         msg:
   //             "Extracting entity for ${entityExtractorLanguage.toString().split('.').last}...");
   //     final entityExtractor =
@@ -222,7 +222,7 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   //       }
   //     } catch (e) {
   //       Fluttertoast.cancel();
-  //       Fluttertoast.showToast(
+  //       await Fluttertoast.showToast(
   //           msg:
   //               "Connect to internet if you want proper entity extraction result");
   //     }
