@@ -7,11 +7,15 @@ class MyScaffold extends StatefulWidget {
   final IconData? floatingActionButtonIcon;
   bool? resizeToAvoidBottomInset;
   Color? backgroundColor;
+  Key? floatingActionButtonKey;
+  Key? appBarKey;
 
   MyScaffold(
       {Key? key,
       required this.body,
       required this.title,
+      this.floatingActionButtonKey,
+      this.appBarKey,
       this.leading,
       this.onOpenFloatingActionButton,
       this.onCloseFloatingActionButton,
@@ -48,11 +52,13 @@ class MyScaffold extends StatefulWidget {
 class _MyScaffold extends State<MyScaffold> {
   @override
   Widget build(BuildContext context) {
-    widget.appBarActions?.add(const SizedBox.square(dimension: 10));
-
     Widget? floatingActionButton;
     if (widget.floatingActionButtonIcon != null) {
       floatingActionButton = SpeedDial(
+        key: widget.floatingActionButtonKey,
+        // iconTheme: IconThemeData(size: 40),
+        backgroundColor: Colors.white70,
+        foregroundColor: Theme.of(context).primaryColor,
         children: widget.speedDialChildren,
         onPress: widget.speedDialOnPress,
         icon: widget.floatingActionButtonIcon,
@@ -86,13 +92,20 @@ class _MyScaffold extends State<MyScaffold> {
 
     if (widget.bottomNavigationBarChildren.isEmpty) {
       floatingActionButton = Padding(
-          padding: const EdgeInsets.all(8), child: floatingActionButton);
+          key: widget.floatingActionButtonKey,
+          padding: const EdgeInsets.all(8),
+          child: floatingActionButton);
     }
 
     Widget? bottomNavigationBar;
     if (widget.bottomNavigationBarChildren.isNotEmpty) {
+      EdgeInsets paddingNow = MediaQuery.of(context).viewInsets;
       bottomNavigationBar = Padding(
-          padding: MediaQuery.of(context).viewInsets,
+          padding: EdgeInsets.only(
+              left: paddingNow.left,
+              top: paddingNow.top + 3,
+              right: paddingNow.right,
+              bottom: paddingNow.bottom),
           child: BottomAppBar(
             shape: const CircularNotchedRectangle(),
             notchMargin: 8.0,
@@ -114,6 +127,7 @@ class _MyScaffold extends State<MyScaffold> {
         resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
         body: widget.body,
         appBar: AppBar(
+          key: widget.appBarKey,
           elevation: 0,
           centerTitle: false,
           leading: widget.leading,

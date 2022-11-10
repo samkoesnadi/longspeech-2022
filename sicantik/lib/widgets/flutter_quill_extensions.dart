@@ -17,6 +17,7 @@ import 'package:flutter_quill_extensions/embeds/utils.dart';
 import 'package:flutter_quill_extensions/embeds/widgets/image.dart';
 import 'package:flutter_quill_extensions/embeds/widgets/image_resizer.dart';
 import 'package:gallery_saver/gallery_saver.dart';
+import 'package:sicantik/widgets/sound.dart';
 import 'package:tuple/tuple.dart';
 
 Widget _menuOptionsForReadonlyImage(
@@ -153,6 +154,15 @@ class MyImageEmbedBuilder implements EmbedBuilder {
       _widthHeight = Tuple2((image as Image).width, image.height);
     }
 
+    Widget textWidget = Align(
+      alignment: Alignment.center,
+      child: SelectableText(
+        "Detected:\n${detectedObjects.join(", ")}\n",
+        style: TextStyle(fontSize: 12),
+        textAlign: TextAlign.center,
+      ),
+    );
+
     if (!readOnly && base.isMobile()) {
       return GestureDetector(
           onTap: () {
@@ -232,10 +242,7 @@ class MyImageEmbedBuilder implements EmbedBuilder {
                 });
           },
           child: Column(
-            children: [
-              image,
-              Text("Detected objects: ${detectedObjects.join(", ")}")
-            ],
+            children: [image, textWidget],
           ));
     }
 
@@ -244,12 +251,12 @@ class MyImageEmbedBuilder implements EmbedBuilder {
     }
 
     // We provide option menu for mobile platform excluding base64 image
-    return _menuOptionsForReadonlyImage(context, imageUrl, Column(
-      children: [
-        image,
-        Text("Detected objects: ${detectedObjects.join(", ")}")
-      ],
-    ));
+    return _menuOptionsForReadonlyImage(
+        context,
+        imageUrl,
+        Column(
+          children: [image, textWidget],
+        ));
   }
 
   @override
@@ -259,9 +266,11 @@ class MyImageEmbedBuilder implements EmbedBuilder {
 class FlutterQuillEmbeds {
   static List<EmbedBuilder> builders(
           {void Function(GlobalKey videoContainerKey)? onVideoInit,
-          void Function(String)? onImageRemove, Map? imageArguments}) =>
+          void Function(String)? onImageRemove,
+          Map? imageArguments}) =>
       [
-        MyImageEmbedBuilder(onRemove: onImageRemove, imageArguments: imageArguments),
+        MyImageEmbedBuilder(
+            onRemove: onImageRemove, imageArguments: imageArguments),
         VideoEmbedBuilder(onVideoInit: onVideoInit),
         FormulaEmbedBuilder(),
       ];
@@ -352,4 +361,140 @@ class FlutterQuillEmbeds {
             )
     ];
   }
+}
+
+var cameraPickSettingSelector = (context) => showDialog<MediaPickSetting>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        contentPadding: EdgeInsets.zero,
+        backgroundColor: Colors.transparent,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextButton.icon(
+              icon: const Icon(
+                Icons.camera,
+                color: Colors.orangeAccent,
+              ),
+              label: Text(
+                'Camera'.i18n,
+                style: TextStyle(color: Colors.white),
+              ),
+              onPressed: () => Navigator.pop(ctx, MediaPickSetting.Camera),
+            ),
+            TextButton.icon(
+              icon: const Icon(
+                Icons.video_call,
+                color: Colors.cyanAccent,
+              ),
+              label: Text('Video'.i18n, style: TextStyle(color: Colors.white)),
+              onPressed: () => Navigator.pop(ctx, MediaPickSetting.Video),
+            )
+          ],
+        ),
+      ),
+    );
+
+var speechRecordPickSettingSelector = (context) => showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        contentPadding: EdgeInsets.zero,
+        backgroundColor: Colors.transparent,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextButton.icon(
+              icon: const Icon(
+                Icons.camera,
+                color: Colors.orangeAccent,
+              ),
+              label: Text(
+                'Record audio',
+                style: TextStyle(color: Colors.white),
+              ),
+              onPressed: () => Navigator.pop(ctx, "RecordAudio"),
+            ),
+            TextButton.icon(
+              icon: const Icon(
+                Icons.video_call,
+                color: Colors.cyanAccent,
+              ),
+              label: Text('Speech recognition',
+                  style: TextStyle(color: Colors.white)),
+              onPressed: () => Navigator.pop(ctx, "SpeechRecognition"),
+            )
+          ],
+        ),
+      ),
+    );
+
+var mediaPickSettingSelector = (context) => showDialog<MediaPickSetting>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          backgroundColor: Colors.transparent,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextButton.icon(
+                icon: const Icon(
+                  Icons.collections,
+                  color: Colors.orangeAccent,
+                ),
+                label:
+                    Text('Gallery'.i18n, style: TextStyle(color: Colors.white)),
+                onPressed: () => Navigator.pop(ctx, MediaPickSetting.Gallery),
+              ),
+              TextButton.icon(
+                icon: const Icon(
+                  Icons.link,
+                  color: Colors.cyanAccent,
+                ),
+                label: Text('Link'.i18n, style: TextStyle(color: Colors.white)),
+                onPressed: () => Navigator.pop(ctx, MediaPickSetting.Link),
+              )
+            ],
+          ),
+        ));
+
+// this needs to be global because the audioplayerwidget is rebuilt on every click
+Map<String, PlayerSoundRecorder> globalAudioPlayers = {};
+
+class AudioPlayerWidget extends StatelessWidget {
+  String filePath;
+
+  AudioPlayerWidget({required this.filePath}) {
+    if (!globalAudioPlayers.containsKey(filePath)) {
+      globalAudioPlayers[filePath] = PlayerSoundRecorder();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    PlayerSoundRecorder? playerSoundRecorder = globalAudioPlayers[filePath];
+    return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) =>
+            playerSoundRecorder!.getPlayerSection(filePath));
+  }
+}
+
+class AudioPlayerEmbedBuilder implements EmbedBuilder {
+  @override
+  String get key => 'audioPlayer';
+
+  @override
+  Widget build(
+    BuildContext context,
+    QuillController controller,
+    Embed node,
+    bool readOnly,
+  ) {
+    return AudioPlayerWidget(filePath: node.value.data);
+  }
+}
+
+class AudioPlayerBlockEmbed extends CustomBlockEmbed {
+  const AudioPlayerBlockEmbed(String value) : super(noteType, value);
+
+  static const String noteType = 'audioPlayer';
 }

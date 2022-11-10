@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:get_storage/get_storage.dart';
 import 'package:sicantik/utils.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
@@ -61,7 +62,7 @@ class SpeechToTextHandler {
   bool _listenLoop = true;
 
   static final SpeechToText _speech = SpeechToText();
-  static String currentLocaleId = '';  // this is to be taken outside of class.
+  static String _currentLocaleId = '';  // this is to be taken outside of class.
   String fullText = "";  // this is to be taken outside of class.
   static List<LocaleName> localeNames = [];  // this is to be taken outside of class.
 
@@ -90,7 +91,7 @@ class SpeechToTextHandler {
         listenFor: const Duration(seconds: listenFor),
         pauseFor: const Duration(seconds: pauseFor),
         partialResults: true,
-        localeId: currentLocaleId,
+        localeId: _currentLocaleId,
         onSoundLevelChange: soundLevelListener,
         cancelOnError: false,
         listenMode: ListenMode.dictation);
@@ -141,7 +142,8 @@ class SpeechToTextHandler {
         localeNames = await _speech.locales();
         var systemLocale = await _speech.systemLocale();
 
-        currentLocaleId = systemLocale?.localeId ?? '';
+        GetStorage commonStorage = GetStorage();
+        _currentLocaleId = commonStorage.read("speechToTextLanguage") ?? systemLocale?.localeId ?? '';
       }
       ready = hasSpeech;
     } catch (e) {
@@ -150,6 +152,13 @@ class SpeechToTextHandler {
     }
 
     return ready;
+  }
+
+  static String get currentLocaleId => _currentLocaleId;
+  static set currentLocaleId(String value) {
+    _currentLocaleId = value;
+    GetStorage commonStorage = GetStorage();
+    commonStorage.write("speechToTextLanguage", value);
   }
 
   void _errorListener(SpeechRecognitionError error) {

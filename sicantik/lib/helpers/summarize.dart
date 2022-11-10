@@ -14,16 +14,22 @@ Map<String, dynamic> summarize(
     return {"summarized": "", "keywords": []};
   }
 
+  // Set limit for maximum documents
+  int maxDocs = 500;
+  if (docs.length > maxDocs) {
+    docs = docs.sublist(0, maxDocs);
+  }
+
   TokenizationOutput tokenOut = TokenizationOutput();
-  List<List<double?>> tfidf = myHybridTfIdfMatrix(docs, tokenOut: tokenOut);
+  tokenOut = documentTokenizer(docs);
+  Map<String, double> wordProbability = hybridTfIdfProbability(tokenOut);
 
   List keywordsCandidates = [];
-  tokenOut.bagOfWords.forEach((key, value) {
+  wordProbability.forEach((key, value) {
     if (!commonEnglishWords.contains(key)) {
       keywordsCandidates.add([key, value]);
     }
   });
-
   keywordsCandidates
       .sort((elemTwo, elemOne) => elemOne[1].compareTo(elemTwo[1]));
 
@@ -31,8 +37,10 @@ Map<String, dynamic> summarize(
     keywordsCandidates = keywordsCandidates.sublist(0, amountOfSentences);
   }
   List keywords =
-      keywordsCandidates.map((elem) => elem[0]).toList().cast<String>();
+      keywordsCandidates.map((elem) => allWordsCapitilize(elem[0])).toList().cast<String>();
 
+  List<List<double?>> tfidf =
+    sentenceTfIdfMatrix(docs, wordProbability, tokenOut: tokenOut);
   List<Array> inp =
       tfidf.map((elem) => Array(elem.map((x) => x!).toList())).toList();
   Array2d inp2d = Array2d(inp);
@@ -65,7 +73,11 @@ Map<String, dynamic> summarize(
         docs[i] = "${docs[i].trim()}.";
       }
 
-      summarized += "${docs[i]} ";
+      summarized += "* ${docs[i]}";
+
+      if (i < docs.length - 1) {
+        summarized += '\n';
+      }
     }
   }
 

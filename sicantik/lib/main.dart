@@ -9,11 +9,12 @@ import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:loader_overlay/loader_overlay.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sicantik/helpers/image_labeler.dart';
 import 'package:sicantik/helpers/notification.dart';
-import 'package:sicantik/internationalization.dart';
 import 'package:sicantik/screens/home_screen.dart';
 import 'package:sicantik/theme_data.dart';
+import 'package:sicantik/internationalization.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,15 +48,21 @@ class MyApp extends StatelessWidget {
       systemNavigationBarIconBrightness: Brightness.dark,
     ));
 
+    const chosenLocale = Locale('en', 'US');
+
     return GlobalLoaderOverlay(
         child: GetMaterialApp(
-      localizationsDelegates: const [LocaleNamesLocalizationsDelegate()],
       theme: themeData,
       translations: Messages(),
-      // your translations
-      locale: const Locale('en', 'US'),
       enableLog: false,
-
+      localizationsDelegates: const [
+        LocaleNamesLocalizationsDelegate(),
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      locale: chosenLocale,
+      fallbackLocale: const Locale('en', 'US'),
       /// SET THE ROUTES HERE ///
       home: const HomeScreen(),
     ));

@@ -1,21 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:delta_to_html/delta_to_html.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_html_to_pdf/flutter_html_to_pdf.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
-import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sicantik/helpers/flutter_quill_extensions.dart';
 import 'package:sicantik/helpers/summarize.dart';
 import 'package:sicantik/utils.dart';
-import 'package:tuple/tuple.dart';
 
 // Map entityExtractionLanguageMap = {
 //   "en": EntityExtractorLanguage.english,
@@ -40,15 +35,59 @@ Future<void> saveDocument(
     String title,
     Document quillControllerDocument,
     bool isStarred,
-    Map<String, dynamic> imageClassifications) async {
+    Map<String, dynamic> imageClassifications,
+    List<String> voiceRecordings,
+    List<String> videos) async {
   final noteStorage = GetStorage("notes");
 
   // Update full text
   var json = jsonEncode(quillControllerDocument.toDelta().toJson());
   await noteStorage.write("$noteId-full", json);
 
-  Map<String, dynamic> aiAnalysisResult =
-      await aiAnalysis(quillControllerDocument.toPlainText());
+  String plainText = '${quillControllerDocument.toPlainText()}. ';
+
+  Map tempImageClassifications = Map.from(imageClassifications);
+  for (final item in tempImageClassifications.entries) {
+    // remove unused images
+    if (!json.contains(item.key)) {
+      try {
+        await File(item.key).delete();
+      } catch (err) {
+        logger.e(err);
+      }
+      imageClassifications.remove(item.key);
+    } else {
+      for (String keyword in item.value) {
+        plainText += '$keyword. ';
+      }
+    }
+  }
+  List tempVoiceRecordings = [...voiceRecordings];
+  for (String item in tempVoiceRecordings) {
+    // remove unused images
+    if (!json.contains(item)) {
+      try {
+        await File(item).delete();
+      } catch (err) {
+        logger.e(err);
+      }
+      voiceRecordings.removeWhere((elem) => elem == item);
+    }
+  }
+  List tempVideos = [...videos];
+  for (String item in tempVideos) {
+    // remove unused images
+    if (!json.contains(item)) {
+      try {
+        await File(item).delete();
+      } catch (err) {
+        logger.e(err);
+      }
+      videos.removeWhere((elem) => elem == item);
+    }
+  }
+
+  Map<String, dynamic> aiAnalysisResult = await aiAnalysis(plainText);
 
   Map<String, dynamic> noteMetadata = noteStorage.read(noteId) ?? {};
   noteMetadata["title"] = title;
@@ -56,17 +95,11 @@ Future<void> saveDocument(
   noteMetadata["summarized"] = aiAnalysisResult["summarized"];
   noteMetadata["wordCount"] = aiAnalysisResult["wordCount"];
 
-  for (final keywords in imageClassifications.values) {
-    for (String keyword in keywords) {
-      if (!aiAnalysisResult["entities"].contains(keyword)) {
-        aiAnalysisResult["entities"].add(keyword);
-      }
-    }
-  }
-
   await noteStorage.write(noteId, noteMetadata);
   await noteStorage.write("$noteId-ners", aiAnalysisResult["entities"]);
   await noteStorage.write("$noteId-imageClassifications", imageClassifications);
+  await noteStorage.write("$noteId-videos", videos);
+  await noteStorage.write("$noteId-voiceRecordings", voiceRecordings);
   await noteStorage.write(
       "$noteId-detectedLanguages", aiAnalysisResult["detectedLanguages"]);
   await noteStorage.write("noteIds",
@@ -80,6 +113,33 @@ Future<void> deleteDocument(String noteId) async {
 
   List<String> noteIds = noteStorage.read("noteIds")?.cast<String>() ?? [];
   noteIds.removeWhere((element) => element == noteId);
+
+  // remove all resources (images, videos and voice recordings)
+  Map imageClassifications =
+      noteStorage.read("$noteId-imageClassifications") ?? {};
+  for (var entry in imageClassifications.entries) {
+    try {
+      await File(entry.key).delete();
+    } catch (err) {
+      logger.e(err);
+    }
+  }
+  List videos = noteStorage.read("$noteId-videos") ?? [];
+  for (var entry in videos) {
+    try {
+      await File(entry).delete();
+    } catch (err) {
+      logger.e(err);
+    }
+  }
+  List voiceRecordings = noteStorage.read("$noteId-voiceRecordings") ?? [];
+  for (var entry in voiceRecordings) {
+    try {
+      await File(entry).delete();
+    } catch (err) {
+      logger.e(err);
+    }
+  }
 
   await noteStorage.remove("$noteId-ners");
   await noteStorage.remove("$noteId-detectedLanguages");
@@ -116,7 +176,8 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
 
   try {
     Fluttertoast.showToast(msg: "Summarizing...");
-    Map summarizedAndEntities = summarize(paragraph: plainText, amountOfSentences: 5);
+    Map summarizedAndEntities =
+        summarize(paragraph: plainText, amountOfSentences: 15);
     summarized = summarizedAndEntities["summarized"];
     entities = summarizedAndEntities["keywords"];
   } catch (e) {
@@ -124,7 +185,7 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   }
 
   //// Identify text language
-  Fluttertoast.cancel();
+  await Fluttertoast.cancel();
   Fluttertoast.showToast(msg: "Identifying language...");
   final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.1);
   final List<IdentifiedLanguage> possibleLanguages =
@@ -134,6 +195,7 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
     detectedLanguages.add(possibleLanguage.languageTag);
   }
   languageIdentifier.close();
+  await Fluttertoast.cancel();
 
   //// Identify ner
   // for (String detectedLanguage in detectedLanguages) {
@@ -178,70 +240,12 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   };
 }
 
-class MyQuillEditor {
-  QuillController quillController;
-  FocusNode focusNode;
-
-  MyQuillEditor({
-    required this.quillController,
-    required this.focusNode,
-  });
-
-  Future<String> _onImagePaste(Uint8List imageBytes) async {
-    // Saves the image to applications directory
-    final appDocDir = await getApplicationDocumentsDirectory();
-    final file = await File(
-            '${appDocDir.path}/${basename('${DateTime.now().millisecondsSinceEpoch}.png')}')
-        .writeAsBytes(imageBytes, flush: true);
-    return file.path.toString();
-  }
-
-  QuillEditor generateQuillEditor(
-      {bool readOnly = false,
-      void Function(String)? onImageRemove,
-      Map? imageArguments}) {
-    return QuillEditor(
-      controller: quillController,
-      scrollController: ScrollController(),
-      scrollable: true,
-      showCursor: true,
-      focusNode: focusNode,
-      autoFocus: false,
-      readOnly: readOnly,
-      placeholder: 'Add content',
-      expands: false,
-      padding: EdgeInsets.zero,
-      onImagePaste: _onImagePaste,
-      customStyles: DefaultStyles(
-          h1: DefaultTextBlockStyle(
-              const TextStyle(
-                fontSize: 32,
-                color: Colors.black,
-                height: 1.15,
-                fontWeight: FontWeight.w300,
-              ),
-              const Tuple2(16, 0),
-              const Tuple2(0, 0),
-              null),
-          sizeSmall: const TextStyle(fontSize: 9)),
-      embedBuilders: [
-        ...FlutterQuillEmbeds.builders(
-            onImageRemove: onImageRemove, imageArguments: imageArguments)
-      ],
-    );
-  }
-}
-
 Future<File> exportToPDF(List json, String dirPath, String fileName) async {
   String htmlContent = DeltaToHTML.encodeJson(json);
-  htmlContent =
-      htmlContent.replaceAll("src='/", "src='file:///");
+  htmlContent = htmlContent.replaceAll("src='/", "src='file:///");
 
-  final appDocDir = await getApplicationDocumentsDirectory();
-
-  var generatedPdfFile =
-      await FlutterHtmlToPdf.convertFromHtmlContent(htmlContent,
-      appDocDir.path, fileName);
+  var generatedPdfFile = await FlutterHtmlToPdf.convertFromHtmlContent(
+      htmlContent, dirPath, fileName);
 
   return generatedPdfFile;
 }

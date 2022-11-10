@@ -14,12 +14,16 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:sicantik/helpers/document.dart';
-import 'package:sicantik/helpers/flutter_quill_extensions.dart';
 import 'package:sicantik/helpers/image_labeler.dart';
 import 'package:sicantik/helpers/speech_to_text.dart';
 import 'package:sicantik/screens/view_note_screen.dart';
 import 'package:sicantik/utils.dart';
+import 'package:sicantik/widgets/bubble_showcase.dart';
+import 'package:sicantik/widgets/digital_ink.dart';
+import 'package:sicantik/widgets/flutter_quill_extensions.dart';
+import 'package:sicantik/widgets/quill_editor.dart';
 import 'package:sicantik/widgets/scaffold.dart';
+import 'package:sicantik/widgets/sound.dart';
 import 'package:sicantik/widgets/star_button.dart';
 import 'package:uuid/uuid.dart';
 
@@ -39,7 +43,14 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
   late String noteId;
   late List<String> allStarred;
   bool isStarred = false;
+
+  // keep track of resources to remove because quill does not do that
   late Map<String, dynamic> imageClassifications;
+  late List<String> voiceRecordings;
+  late List<String> videos;
+
+  Uuid uuid = Uuid();
+  RecordSoundRecorder recordSoundRecorder = RecordSoundRecorder();
 
   @override
   void initState() {
@@ -71,25 +82,23 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
 
     imageClassifications =
         noteStorage.read("$noteId-imageClassifications") ?? {};
+    voiceRecordings = noteStorage.read("$noteId-voiceRecordings").cast<String>() ?? [];
+    videos = noteStorage.read("$noteId-videos").cast<String>() ?? [];
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
         onWillPop: () async {
-
           await Alert(
               context: context,
               style: const AlertStyle(isOverlayTapDismiss: false),
-              title: "What should we do with this document, boss?",
+              title: "What should we do with this document?",
               buttons: [
                 DialogButton(
-                    child: Text("Cancel",
-                        style: TextStyle(
-                            color: Theme.of(context)
-                                .primaryTextTheme
-                                .headline1
-                                ?.color)),
+                    color: Colors.grey,
+                    child:
+                        Text("Cancel", style: TextStyle(color: Colors.white)),
                     onPressed: () => Get.back()),
                 DialogButton(
                     child: Text("Discard",
@@ -122,7 +131,9 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                           _titleController.text,
                           _quillController.document,
                           isStarred,
-                          imageClassifications);
+                          imageClassifications,
+                          voiceRecordings,
+                          videos);
                       Fluttertoast.cancel();
                       Fluttertoast.showToast(msg: "The document is saved");
                       context.loaderOverlay.hide();
@@ -135,30 +146,32 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
         child: MyScaffold(
             resizeToAvoidBottomInset: true,
             backgroundColor: Colors.white,
-            body: Column(children: [
-              const Padding(padding: EdgeInsets.all(5)),
-              Flexible(
-                  fit: FlexFit.loose,
-                  child: RawKeyboardListener(
-                    focusNode: FocusNode(),
-                    onKey: (event) {
-                      if (event.data.isControlPressed &&
-                          event.character == 'b') {
-                        if (_quillController
-                            .getSelectionStyle()
-                            .attributes
-                            .keys
-                            .contains('bold')) {
-                          _quillController.formatSelection(
-                              Attribute.clone(Attribute.bold, null));
-                        } else {
-                          _quillController.formatSelection(Attribute.bold);
-                        }
-                      }
-                    },
-                    child: _buildEditor(context),
-                  ))
-            ]),
+            body: BubbleShowcaseNewNoteWidget(
+                toolbarKey: toolbarKey,
+                child: Column(children: [
+                  const Padding(padding: EdgeInsets.all(5)),
+                  Flexible(
+                      fit: FlexFit.loose,
+                      child: RawKeyboardListener(
+                        focusNode: FocusNode(),
+                        onKey: (event) {
+                          if (event.data.isControlPressed &&
+                              event.character == 'b') {
+                            if (_quillController
+                                .getSelectionStyle()
+                                .attributes
+                                .keys
+                                .contains('bold')) {
+                              _quillController.formatSelection(
+                                  Attribute.clone(Attribute.bold, null));
+                            } else {
+                              _quillController.formatSelection(Attribute.bold);
+                            }
+                          }
+                        },
+                        child: _buildEditor(context),
+                      ))
+                ])),
             title: Container(
                 alignment: Alignment.centerLeft,
                 color: Colors.white70,
@@ -181,13 +194,21 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                         _titleController.text,
                         _quillController.document,
                         isStarred,
-                        imageClassifications);
+                        imageClassifications,
+                        voiceRecordings,
+                        videos);
 
                     Fluttertoast.cancel();
                     Fluttertoast.showToast(msg: "The document is saved");
                   },
                   icon: const Icon(Icons.save))
             ]));
+  }
+
+  @override
+  void dispose() {
+    globalAudioPlayers = {};
+    super.dispose();
   }
 
   // Renders the image picked by imagePicker from local file storage
@@ -231,25 +252,58 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
     final appDocDir = await getApplicationDocumentsDirectory();
     final copiedFile =
         await file.copy('${appDocDir.path}/${basename(file.path)}');
+    videos.add(copiedFile.path);
     return copiedFile.path.toString();
   }
 
+  GlobalKey toolbarKey = GlobalKey();
+
   Widget _buildEditor(BuildContext context) {
     var toolbar = QuillToolbar.basic(
+      key: toolbarKey,
       toolbarIconSize: 21,
+      showDividers: false,
+      showFontFamily: true,
+      showFontSize: true,
+      showBoldButton: true,
+      showItalicButton: true,
+      showSmallButton: false,
+      showUnderLineButton: true,
+      showStrikeThrough: false,
+      showInlineCode: false,
+      showColorButton: true,
+      showBackgroundColorButton: true,
+      showClearFormat: false,
+      showAlignmentButtons: true,
+      showLeftAlignment: true,
+      showCenterAlignment: true,
+      showRightAlignment: true,
+      showJustifyAlignment: false,
+      showHeaderStyle: true,
+      showListNumbers: true,
+      showListBullets: true,
+      showListCheck: true,
+      showCodeBlock: false,
+      showQuote: true,
+      showIndent: true,
+      showLink: true,
+      showUndo: true,
+      showRedo: true,
+      multiRowsDisplay: false,
+      showDirection: false,
+      showSearchButton: true,
       controller: _quillController,
       embedButtons: FlutterQuillEmbeds.buttons(
-            showFormulaButton: true,
-            // provide a callback to enable picking images from device.
-            // if omit, "image" button only allows adding images from url.
-            // same goes for videos.
-            onImagePickCallback: _onImagePickCallback,
-            onVideoPickCallback: _onVideoPickCallback,
-            // uncomment to provide a custom "pick from" dialog.
-            // mediaPickSettingSelector: _selectMediaPickSetting,
-            // uncomment to provide a custom "pick from" dialog.
-            // cameraPickSettingSelector: _selectCameraPickSetting,
-          ) +
+              // provide a callback to enable picking images from device.
+              // if omit, "image" button only allows adding images from url.
+              // same goes for videos.
+              onImagePickCallback: _onImagePickCallback,
+              onVideoPickCallback: _onVideoPickCallback,
+              // uncomment to provide a custom "pick from" dialog.
+              // mediaPickSettingSelector: _selectMediaPickSetting,
+              // uncomment to provide a custom "pick from" dialog.
+              cameraPickSettingSelector: cameraPickSettingSelector,
+              mediaPickSettingSelector: mediaPickSettingSelector) +
           [
             (controller, toolbarIconSize, iconTheme, dialogTheme) {
               return QuillIconButton(
@@ -262,104 +316,192 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                 fillColor: iconTheme?.iconUnselectedFillColor,
                 borderRadius: iconTheme?.borderRadius ?? 2,
                 onPressed: () async {
-                  final controller = _quillController;
-                  final index = controller.selection.baseOffset;
-                  final length = controller.selection.extentOffset - index;
+                  var selector = speechRecordPickSettingSelector;
 
-                  if (!await SpeechToTextHandler.preInitSpeechState()) {
-                    Alert(
+                  final source = await selector(context);
+                  if (source != null) {
+                    final controller = _quillController;
+                    final index = controller.selection.baseOffset;
+                    final length = controller.selection.extentOffset - index;
+
+                    switch (source) {
+                      case "RecordAudio":
+                        var tempDir = await getTemporaryDirectory();
+                        String audioFilePath =
+                            '${tempDir.path}/sound_${uuid.v4()}';
+
+                        // 1. Record the audio
+                        await recordSoundRecorder.startRecorder(audioFilePath);
+                        await Alert(
                             context: context,
-                            type: AlertType.error,
-                            title: "No speech")
-                        .show();
-                  } else {
-                    Alert(
-                      context: context,
-                      content: Flex(
-                        direction: Axis.vertical,
-                        children: [
-                          const Text('Language:'),
-                          StatefulBuilder(builder:
-                              (BuildContext context, StateSetter setState) {
-                            return DropdownButton<String>(
-                              isExpanded: true,
-                              onChanged: (selectedVal) {
-                                setState(() {
-                                  if (selectedVal != null) {
-                                    SpeechToTextHandler.currentLocaleId =
-                                        selectedVal;
-                                  }
-                                });
-                              },
-                              value: SpeechToTextHandler.currentLocaleId,
-                              items: SpeechToTextHandler.localeNames
-                                  .map(
-                                    (localeName) => DropdownMenuItem(
-                                      value: localeName.localeId,
-                                      child: Text(localeName.name,
-                                          overflow: TextOverflow.ellipsis),
-                                    ),
-                                  )
-                                  .toList(),
-                            );
-                          })
-                        ],
-                      ),
-                      buttons: [
-                        DialogButton(
-                          child: const Text("OK"),
-                          onPressed: () async {
-                            Get.back();
+                            content: StatefulBuilder(
+                                builder: (BuildContext context,
+                                        StateSetter setState) =>
+                                    recordSoundRecorder.getRecorderSection()),
+                            buttons: [
+                              DialogButton(
+                                  child: Text("Stop"),
+                                  onPressed: () {
+                                    Get.back();
+                                    recordSoundRecorder.stopRecorder();
+                                  })
+                            ]).show();
 
-                            final partialTextController =
-                                "Waiting for input...".obs;
-                            final speechToTextHandler = SpeechToTextHandler(
-                                partialResultListener: (String partialText,
-                                    String fullText, int lastTextCount) {
-                              partialTextController.value =
-                                  SpeechToTextHandler.combineSentences(
-                                      fullText, lastTextCount, partialText)[0];
-                              partialTextController.refresh();
-                            }, errorListener: (String errorText) {
-                              partialTextController.value = "Error: $errorText";
-                              partialTextController.refresh();
-                            });
-                            speechToTextHandler.listen();
-                            Alert(
-                                context: context,
-                                content: Obx(
-                                    () => Text(partialTextController.value)),
-                                buttons: [
-                                  DialogButton(
-                                    child: const Text("Stop"),
-                                    onPressed: () {
-                                      speechToTextHandler.stopListening();
-                                      Get.back();
-
-                                      String fullText =
-                                          "${speechToTextHandler.fullText}. ";
-                                      controller.replaceText(
-                                          index,
-                                          length,
-                                          fullText,
-                                          TextSelection.collapsed(
-                                              offset: index + fullText.length));
+                        // 2. Show the player
+                        final block = BlockEmbed.custom(
+                          AudioPlayerBlockEmbed(audioFilePath),
+                        );
+                        controller.replaceText(index, length, block,
+                            TextSelection.collapsed(offset: index + 1));
+                        voiceRecordings.add(audioFilePath);
+                        break;
+                      case "SpeechRecognition":
+                        if (!await SpeechToTextHandler.preInitSpeechState()) {
+                          Alert(
+                                  context: context,
+                                  type: AlertType.error,
+                                  title: "No speech")
+                              .show();
+                        } else {
+                          Alert(
+                            context: context,
+                            content: Flex(
+                              direction: Axis.vertical,
+                              children: [
+                                const Text('Language:'),
+                                StatefulBuilder(builder: (BuildContext context,
+                                    StateSetter setState) {
+                                  return DropdownButton<String>(
+                                    isExpanded: true,
+                                    onChanged: (selectedVal) {
+                                      setState(() {
+                                        if (selectedVal != null) {
+                                          SpeechToTextHandler.currentLocaleId =
+                                              selectedVal;
+                                        }
+                                      });
                                     },
-                                  )
-                                ],
-                                closeFunction: () {
-                                  speechToTextHandler.stopListening();
-                                }).show();
-                          },
-                        )
-                      ],
-                    ).show();
+                                    value: SpeechToTextHandler.currentLocaleId,
+                                    items: SpeechToTextHandler.localeNames
+                                        .map(
+                                          (localeName) => DropdownMenuItem(
+                                            value: localeName.localeId,
+                                            child: Text(localeName.name,
+                                                overflow:
+                                                    TextOverflow.ellipsis),
+                                          ),
+                                        )
+                                        .toList(),
+                                  );
+                                })
+                              ],
+                            ),
+                            buttons: [
+                              DialogButton(
+                                child: const Text("OK"),
+                                onPressed: () async {
+                                  Get.back();
+
+                                  final partialTextController =
+                                      "Waiting for input...".obs;
+                                  final speechToTextHandler =
+                                      SpeechToTextHandler(partialResultListener:
+                                          (String partialText, String fullText,
+                                              int lastTextCount) {
+                                    partialTextController.value =
+                                        SpeechToTextHandler.combineSentences(
+                                            fullText,
+                                            lastTextCount,
+                                            partialText)[0];
+                                    partialTextController.refresh();
+                                  }, errorListener: (String errorText) {
+                                    partialTextController.value =
+                                        "Error: $errorText";
+                                    partialTextController.refresh();
+                                  });
+                                  speechToTextHandler.listen();
+                                  Alert(
+                                      context: context,
+                                      content: Obx(() =>
+                                          Text(partialTextController.value)),
+                                      buttons: [
+                                        DialogButton(
+                                          child: const Text("Stop"),
+                                          onPressed: () {
+                                            speechToTextHandler.stopListening();
+                                            Get.back();
+
+                                            String fullText =
+                                                "${speechToTextHandler.fullText}. ";
+                                            controller.replaceText(
+                                                index,
+                                                length,
+                                                fullText,
+                                                TextSelection.collapsed(
+                                                    offset: index +
+                                                        fullText.length));
+                                          },
+                                        )
+                                      ],
+                                      closeFunction: () {
+                                        speechToTextHandler.stopListening();
+                                      }).show();
+                                },
+                              )
+                            ],
+                          ).show();
+                        }
+                        break;
+                      default:
+                        throw ArgumentError('Invalid sourc');
+                    }
                   }
                 },
               );
+            },
+            (controller, toolbarIconSize, iconTheme, dialogTheme) {
+              return FutureBuilder(
+                  future: getApplicationDocumentsDirectory(),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<Directory> snapshot) {
+                    if (snapshot.hasData) {
+                      return QuillIconButton(
+                        icon: Icon(Icons.border_color,
+                            size: toolbarIconSize,
+                            color: iconTheme?.iconUnselectedColor),
+                        highlightElevation: 0,
+                        hoverElevation: 0,
+                        size: toolbarIconSize * 1.77,
+                        fillColor: iconTheme?.iconUnselectedFillColor,
+                        borderRadius: iconTheme?.borderRadius ?? 2,
+                        onPressed: () async {
+                          final filePath =
+                              '${snapshot.data!.path}/ink_${uuid.v4()}';
+
+                          await Get.to(
+                              () => DigitalInkView(filePath: filePath));
+
+                          // 2. Store detected
+                          imageClassifications[standardizeImageUrl(filePath)] =
+                              GetStorage().read("detectedWord_temp") ??
+                                  ["none"];
+
+                          // 3. Show the image
+                          final controller = _quillController;
+                          final index = controller.selection.baseOffset;
+                          final length =
+                              controller.selection.extentOffset - index;
+                          final block = BlockEmbed.image(filePath);
+                          controller.replaceText(index, length, block,
+                              TextSelection.collapsed(offset: index + 1));
+                        },
+                      );
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  });
             }
           ],
-      showAlignmentButtons: true,
       afterButtonPressed: _focusNode.requestFocus,
     );
 
