@@ -334,6 +334,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                         await recordSoundRecorder.startRecorder(audioFilePath);
                         await Alert(
                             context: context,
+                            style: const AlertStyle(isOverlayTapDismiss: false, isCloseButton: false),
+                            onWillPopActive: true,
                             content: StatefulBuilder(
                                 builder: (BuildContext context,
                                         StateSetter setState) =>
@@ -422,6 +424,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                                   speechToTextHandler.listen();
                                   Alert(
                                       context: context,
+                                      style: const AlertStyle(isOverlayTapDismiss: false, isCloseButton: false),
+                                      onWillPopActive: true,
                                       content: Obx(() =>
                                           Text(partialTextController.value)),
                                       buttons: [
