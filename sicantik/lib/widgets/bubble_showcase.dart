@@ -52,7 +52,7 @@ class BubbleShowcaseHomeScreenWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   child: SpeechBubble(
                       nipLocation: NipLocation.RIGHT,
-                      color: Colors.teal,
+                      color: bubbleColor,
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text('Click here to add new note',
@@ -89,7 +89,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   child: SpeechBubble(
                       nipLocation: NipLocation.BOTTOM,
-                      color: Colors.teal,
+                      color: bubbleColor,
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
@@ -109,7 +109,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   child: SpeechBubble(
                       nipLocation: NipLocation.BOTTOM,
-                      color: Colors.teal,
+                      color: bubbleColor,
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
@@ -130,7 +130,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   child: SpeechBubble(
                       nipLocation: NipLocation.BOTTOM,
-                      color: Colors.teal,
+                      color: bubbleColor,
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
@@ -151,7 +151,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   child: SpeechBubble(
                       nipLocation: NipLocation.BOTTOM,
-                      color: Colors.teal,
+                      color: bubbleColor,
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
@@ -212,7 +212,7 @@ class BubbleShowcaseViewNoteWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   child: SpeechBubble(
                     nipLocation: NipLocation.TOP_LEFT,
-                    color: Colors.teal,
+                    color: bubbleColor,
                     child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
@@ -231,7 +231,7 @@ class BubbleShowcaseViewNoteWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   child: SpeechBubble(
                     nipLocation: NipLocation.TOP,
-                    color: Colors.teal,
+                    color: bubbleColor,
                     child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Text(
@@ -250,7 +250,7 @@ class BubbleShowcaseViewNoteWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   child: SpeechBubble(
                     nipLocation: NipLocation.TOP_RIGHT,
-                    color: Colors.teal,
+                    color: bubbleColor,
                     child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Text(
@@ -269,7 +269,7 @@ class BubbleShowcaseViewNoteWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   child: SpeechBubble(
                     nipLocation: NipLocation.TOP_RIGHT,
-                    color: Colors.teal,
+                    color: bubbleColor,
                     child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Text(
