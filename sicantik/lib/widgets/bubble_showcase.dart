@@ -34,7 +34,7 @@ class BubbleShowcaseHomeScreenWidget extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(10),
                       child: Text(
-                        'Hello,\n\nMy name is Samuel Matthew Koesnadi, the Expressive app author.\n\n'
+                        'My name is Samuel Matthew Koesnadi, the Expressive app author.\n\n'
                           'I am now going to give you a quick walk through the app :D\n\n'
                           'We will learn how to use this App to allow your productivity and creativity to shine! And yes, also with the aid of AI ;) \n\n\n'
                           'With love, Samuel.',
