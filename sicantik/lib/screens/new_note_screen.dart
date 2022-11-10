@@ -82,8 +82,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
 
     imageClassifications =
         noteStorage.read("$noteId-imageClassifications") ?? {};
-    voiceRecordings = noteStorage.read("$noteId-voiceRecordings").cast<String>() ?? [];
-    videos = noteStorage.read("$noteId-videos").cast<String>() ?? [];
+    voiceRecordings = noteStorage.read("$noteId-voiceRecordings")?.cast<String>() ?? [];
+    videos = noteStorage.read("$noteId-videos")?.cast<String>() ?? [];
   }
 
   @override

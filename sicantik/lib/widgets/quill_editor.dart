@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sicantik/utils.dart';
 import 'package:sicantik/widgets/flutter_quill_extensions.dart';
 import 'package:tuple/tuple.dart';
-
 
 class MyQuillEditor {
   QuillController quillController;
@@ -23,15 +24,17 @@ class MyQuillEditor {
     // Saves the image to applications directory
     final appDocDir = await getApplicationDocumentsDirectory();
     final file = await File(
-        '${appDocDir.path}/${basename('${DateTime.now().millisecondsSinceEpoch}.png')}')
+            '${appDocDir.path}/${basename('${DateTime.now().millisecondsSinceEpoch}.png')}')
         .writeAsBytes(imageBytes, flush: true);
     return file.path.toString();
   }
 
+  final _random = Random();
+
   QuillEditor generateQuillEditor(
       {bool readOnly = false,
-        void Function(String)? onImageRemove,
-        Map? imageArguments}) {
+      void Function(String)? onImageRemove,
+      Map? imageArguments}) {
     return QuillEditor(
       controller: quillController,
       scrollController: ScrollController(),
@@ -40,7 +43,8 @@ class MyQuillEditor {
       focusNode: focusNode,
       autoFocus: false,
       readOnly: readOnly,
-      placeholder: 'Add content',
+      placeholder: newNotePlaceholderOptions[
+          _random.nextInt(newNotePlaceholderOptions.length)],
       expands: false,
       padding: EdgeInsets.zero,
       onImagePaste: _onImagePaste,

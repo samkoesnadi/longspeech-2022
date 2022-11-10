@@ -18,6 +18,20 @@ var commonEnglishWords =
     ew.all + ["has", "had", "been", "was", "is", "are", "be", "am", "none"];
 int inAppReviewNoteAmount = 8;
 Duration inAppReviewDatetimeGap = const Duration(days: 3);
+List<String> newNotePlaceholderOptions = [
+  "Add note here. Ah, have you ever wondered how to learn things faster? Maybe Feynmann technique is the right one for you! "
+  "1, Choose a concept to learn. "
+  "2, Teach it to yourself or someone else. "
+  "3, Return to the source material if you get stuck. "
+  "4, Simplify your explainations and create analogies. "
+  "Good luck in what you are doing right now!",
+  "Add note here. Hmm, or list of groceries, or schedules. "
+  "Hmm, I don't know. You can add whatever you want here. After all notes can be whatever you want :) "
+  "Good luck in what you are doing right now!",
+  "Add note here. Intro, body, conclusion. As simple as that, I guess ;) "
+  "The longer the better? The more succinct the better? Well, you are the boss. "
+  "Good luck in what you are doing right now!"
+];
 
 class CardData {
   String title;
