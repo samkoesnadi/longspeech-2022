@@ -118,7 +118,12 @@ class HomeScreenState extends State<HomeScreen> {
         onPressed: () async {
           Alert(context: context, title: "Are you sure?", buttons: [
             DialogButton(
-                child: const Text("Yes"),
+                child: Text(
+                  "Yes",
+                  style: TextStyle(
+                      color:
+                          Theme.of(context).primaryTextTheme.headline1?.color),
+                ),
                 onPressed: () async {
                   Get.back();
                   await deleteDocument(noteId);
@@ -158,16 +163,15 @@ class HomeScreenState extends State<HomeScreen> {
           if (cardData.isEmpty) {
             return Center(
                 child: Text(
-                  "No note found",
-                  style: TextStyle(
-                      color:
-                      Theme.of(context).primaryTextTheme.headline1?.color),
-                ));
+              "No note found",
+              style: TextStyle(
+                  color: Theme.of(context).primaryTextTheme.headline1?.color),
+            ));
           }
 
           if (noteId != null) {
             int index =
-            cardData.indexWhere((element) => element.noteId == noteId);
+                cardData.indexWhere((element) => element.noteId == noteId);
             _scrollController.scrollToIndex(index,
                 preferPosition: AutoScrollPosition.begin);
           }

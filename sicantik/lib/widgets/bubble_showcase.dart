@@ -34,9 +34,9 @@ class BubbleShowcaseHomeScreenWidget extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(10),
                       child: Text(
-                        'My name is Samuel Matthew Koesnadi, the Expressive app author.\n\n'
+                        'My name is Samuel Matthew Koesnadi, the Expressive app author 👨‍🔧 Welcome to the app!\n\n'
                           'I am now going to give you a quick walk through the app 😄\n\n'
-                          'We will learn how to use this App to allow your productivity and creativity to shine! And yes, also with the aid of AI 😉 \n\n\n'
+                          'We will learn how to use this App to allow your productivity and creativity to shine! And yes, your note will be analyzed by AI for key information 😉 It runs on your device, so all data of yours is kept safely in your device.\n\n\n'
                           'With love, Samuel.',
                           style: TextStyle(color: Colors.white),
                           textAlign: TextAlign.center),
@@ -116,8 +116,9 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
-                            "AI will even help you with your work:\n"
-                            "Try taking a photo with the camera button, and the AI will detect the objects in it.",
+                            "AI will analyze your note and find key information:\n"
+                            "Try taking a photo with the camera button, and the AI will detect the objects in it. "
+                            "These objects detections will be considered as key information for AI analysis",
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center),
                       ))),
@@ -137,7 +138,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
-                            "Try out using speech recognition to write with your voice\n"
+                            "Try out speech recognition to write with your voice\n"
                             "Or you want to simply record voices of any presentation or lecture, maybe?",
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center),
@@ -158,7 +159,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
-                          "You can even write with your finger on screen, and the AI will tell you what you write",
+                          "You can even write with your finger on screen, and the AI will tell you what you write. You can also save this handwriting to image later on in the viewing mode",
                           style: TextStyle(color: Colors.white),
                           textAlign: TextAlign.center,
                         ),
@@ -179,7 +180,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                         padding: const EdgeInsets.all(10),
                         child: Text(
                             "Have fun and good luck with your productivity 😄 "
-                            "You can also add the app to home screen for quick access",
+                            "At any time when you want to make notes or agenda, simply open the app and add a note. Quick tips: You can also add the app to home screen for quick access",
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center),
                       ))),
@@ -258,7 +259,7 @@ class BubbleShowcaseViewNoteWidget extends StatelessWidget {
                     child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Text(
-                            'Expressive app author is forgetful, that is why he needs his note to be reminded to him. But, hey, you can use it too',
+                            'Sometimes we want to be reminded of our own note in a specific time in the future, let it be an agenda or a simple self-note. You can create a scheduled reminder here',
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center)),
                   )),
@@ -277,7 +278,7 @@ class BubbleShowcaseViewNoteWidget extends StatelessWidget {
                     child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Text(
-                            'You can also download your written note in PDF format, and also share it to social media or E-mail. Sharing is caring, am I right?',
+                            'You can also download your written note in PDF format, and share it to social media or E-mail. Sharing is caring, am I right?',
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center)),
                   )),

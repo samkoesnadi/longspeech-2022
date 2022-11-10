@@ -37,7 +37,7 @@ class _DigitalInkViewState extends State<DigitalInkView> {
               content: Flex(
                 direction: Axis.vertical,
                 children: [
-                  const Text('Ink recognition language:', style: TextStyle(fontSize: 12),),
+                  const Text('Ink recognition language:', style: TextStyle(fontSize: 14),),
                   StatefulBuilder(
                       builder: (BuildContext context, StateSetter setState) {
                     return DropdownButton<String>(
