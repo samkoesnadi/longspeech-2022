@@ -72,7 +72,6 @@ dependencies:
   share_plus: ^6.2.0
   delta_to_html: ^0.2.1
   flutter_html_to_pdf: ^0.7.0
-  home_widget: ^0.1.6
   english_words: ^4.0.0
   google_mlkit_digital_ink_recognition: ^0.6.0
   bubble_showcase: ^1.1.0

@@ -37,7 +37,7 @@ class _DigitalInkViewState extends State<DigitalInkView> {
               content: Flex(
                 direction: Axis.vertical,
                 children: [
-                  const Text('Ink recognition language:'),
+                  const Text('Ink recognition language:', style: TextStyle(fontSize: 12),),
                   StatefulBuilder(
                       builder: (BuildContext context, StateSetter setState) {
                     return DropdownButton<String>(
@@ -173,7 +173,7 @@ class _DigitalInkViewState extends State<DigitalInkView> {
           return true;
         },
         child: Scaffold(
-          appBar: AppBar(title: Text('Digital Ink Recognition')),
+          appBar: AppBar(title: Text('Canvas')),
           backgroundColor: Colors.white,
           body: SafeArea(
             child: Column(

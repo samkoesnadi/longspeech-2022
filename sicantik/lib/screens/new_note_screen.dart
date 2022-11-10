@@ -476,7 +476,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                         borderRadius: iconTheme?.borderRadius ?? 2,
                         onPressed: () async {
                           final filePath =
-                              '${snapshot.data!.path}/ink_${uuid.v4()}';
+                              '${snapshot.data!.path}/ink_${uuid.v4()}.png';
 
                           await Get.to(
                               () => DigitalInkView(filePath: filePath));
