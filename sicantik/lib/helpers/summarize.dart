@@ -1,7 +1,8 @@
 import 'package:collection/collection.dart';
-import 'package:document_analysis/document_analysis.dart';
+import 'package:document_analysis/document_analysis.dart' hide documentTokenizer;
 import 'package:scidart/numdart.dart';
 import 'package:sicantik/helpers/matrix_creator.dart';
+import 'package:sicantik/helpers/tokenizer.dart';
 import 'package:sicantik/utils.dart';
 
 Map<String, dynamic> summarize(

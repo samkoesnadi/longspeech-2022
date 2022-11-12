@@ -168,7 +168,7 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
               controller: _tabController,
               tabs: [
                 Tab(text: "View"),
-                Tab(text: "Analysis/Info"),
+                Tab(text: "Insights"),
                 Tab(text: "Reminders")
               ]),
           body: BubbleShowcaseViewNoteWidget(

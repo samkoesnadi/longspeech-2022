@@ -57,7 +57,7 @@ class _MyScaffold extends State<MyScaffold> {
       floatingActionButton = SpeedDial(
         key: widget.floatingActionButtonKey,
         // iconTheme: IconThemeData(size: 40),
-        backgroundColor: Colors.white70,
+        backgroundColor: Colors.white60,
         foregroundColor: Theme.of(context).primaryColor,
         children: widget.speedDialChildren,
         onPress: widget.speedDialOnPress,
@@ -93,7 +93,7 @@ class _MyScaffold extends State<MyScaffold> {
     if (widget.bottomNavigationBarChildren.isEmpty) {
       floatingActionButton = Padding(
           key: widget.floatingActionButtonKey,
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.only(right: 8, bottom: 24),
           child: floatingActionButton);
     }
 
@@ -132,6 +132,7 @@ class _MyScaffold extends State<MyScaffold> {
           centerTitle: false,
           leading: widget.leading,
           title: widget.title,
+          titleSpacing: 0.0,
           bottom: widget.appBarBottom,
           actions: widget.appBarActions,
         ),

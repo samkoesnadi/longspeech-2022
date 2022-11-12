@@ -9,8 +9,12 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+const _codec = Codec.defaultCodec;
+const _channel = 2;
+const _bitRate = 256;
+const _samplingRate = 48;
+
 class RecordSoundRecorder {
-  static const _codec = Codec.defaultCodec;
   RxString _recorderTxt = '00:00:00'.obs;
   RxDouble _dbLevel = 0.0.obs;
 
@@ -87,7 +91,10 @@ class RecordSoundRecorder {
 
       await recorderModule.startRecorder(
         toFile: filePath,
-        codec: _codec
+        codec: _codec,
+        sampleRate: _samplingRate,
+        numChannels: _channel,
+        bitRate: _bitRate
       );
 
       recorderModule.logger.d('startRecorder');
@@ -151,7 +158,6 @@ class RecordSoundRecorder {
 }
 
 class PlayerSoundRecorder {
-  static const _codec = Codec.defaultCodec;
   RxString _playerTxt = '00:00:00'.obs;
   RxDouble sliderCurrentPosition = 0.0.obs;
   RxDouble maxDuration = 1.0.obs;
@@ -228,6 +234,8 @@ class PlayerSoundRecorder {
         await playerModule.startPlayer(
             fromURI: filePath,
             codec: codec,
+            sampleRate: _samplingRate,
+            numChannels: _channel,
             whenFinished: () {
               playerModule.logger.d('Play finished');
             });

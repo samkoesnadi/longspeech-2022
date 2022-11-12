@@ -86,6 +86,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
     videos = noteStorage.read("$noteId-videos")?.cast<String>() ?? [];
   }
 
+  GlobalKey appBarKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -148,6 +150,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
             backgroundColor: Colors.white,
             body: BubbleShowcaseNewNoteWidget(
                 toolbarKey: toolbarKey,
+                appBarKey: appBarKey,
                 child: Column(children: [
                   const Padding(padding: EdgeInsets.all(5)),
                   Flexible(
@@ -180,6 +183,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                   controller: _titleController,
                   decoration: const InputDecoration(border: InputBorder.none),
                 )),
+            appBarKey: appBarKey,
             appBarActions: [
               StarButton(
                   isStarred: allStarred.contains(noteId),
@@ -470,7 +474,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                       AsyncSnapshot<Directory> snapshot) {
                     if (snapshot.hasData) {
                       return QuillIconButton(
-                        icon: Icon(Icons.border_color,
+                        icon: Icon(Icons.gesture,
                             size: toolbarIconSize,
                             color: iconTheme?.iconUnselectedColor),
                         highlightElevation: 0,

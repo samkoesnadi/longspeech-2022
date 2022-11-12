@@ -169,6 +169,31 @@ class MyImageEmbedBuilder implements EmbedBuilder {
             showDialog(
                 context: context,
                 builder: (context) {
+                  final saveOption = _SimpleDialogItem(
+                    icon: Icons.save,
+                    color: Colors.greenAccent,
+                    text: 'Save'.i18n,
+                    onPressed: () {
+                      String _imageUrl = appendFileExtensionToImageUrl(imageUrl);
+                      GallerySaver.saveImage(_imageUrl).then((_) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text('Saved'.i18n)));
+                        Navigator.pop(context);
+                      });
+                    },
+                  );
+                  final zoomOption = _SimpleDialogItem(
+                    icon: Icons.zoom_in,
+                    color: Colors.cyanAccent,
+                    text: 'Zoom'.i18n,
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  ImageTapWrapper(imageUrl: imageUrl)));
+                    },
+                  );
                   final resizeOption = _SimpleDialogItem(
                     icon: Icons.settings_outlined,
                     color: Colors.lightBlueAccent,
@@ -237,7 +262,7 @@ class MyImageEmbedBuilder implements EmbedBuilder {
                         shape: const RoundedRectangleBorder(
                             borderRadius:
                                 BorderRadius.all(Radius.circular(10))),
-                        children: [resizeOption, copyOption, removeOption]),
+                        children: [saveOption, zoomOption, resizeOption, copyOption, removeOption]),
                   );
                 });
           },

@@ -34,7 +34,7 @@ class BubbleShowcaseHomeScreenWidget extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(10),
                       child: Text(
-                        'My name is Samuel Matthew Koesnadi, the Expressive app author 👨‍🔧 Welcome to the app!\n\n'
+                          'My name is Samuel Matthew Koesnadi, the Expressive app author 👨‍🔧 Welcome to the app!\n\n'
                           'I am now going to give you a quick walk through the app 😄\n\n'
                           'We will learn how to use this App to allow your productivity and creativity to shine! And yes, your note will be analyzed by AI for key information 😉 It runs on your device, so all data of yours is kept safely in your device.\n\n\n'
                           'With love, Samuel.',
@@ -71,9 +71,11 @@ class BubbleShowcaseHomeScreenWidget extends StatelessWidget {
 
 class BubbleShowcaseNewNoteWidget extends StatelessWidget {
   GlobalKey toolbarKey;
+  GlobalKey appBarKey;
   Widget child;
 
-  BubbleShowcaseNewNoteWidget({required this.toolbarKey, required this.child});
+  BubbleShowcaseNewNoteWidget(
+      {required this.toolbarKey, required this.appBarKey, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -159,10 +161,31 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
-                          "You can even write with your finger on screen, and the AI will tell you what you write. You can also save this handwriting to image later on in the viewing mode",
+                          "You can even write with your finger on screen, and the AI will tell you what you write. You can also save this handwriting in the image gallery by clicking on the image -> Save",
                           style: TextStyle(color: Colors.white),
                           textAlign: TextAlign.center,
                         ),
+                      ))),
+            ),
+          ),
+          RelativeBubbleSlide(
+            widgetKey: appBarKey,
+            highlightPadding: 2,
+            // passThroughMode: PassthroughMode.INSIDE_WITH_NOTIFICATION,
+            child: RelativeBubbleSlideChild(
+              direction: AxisDirection.down,
+              widget: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: SpeechBubble(
+                      nipLocation: NipLocation.TOP_RIGHT,
+                      color: bubbleColor,
+                      child: Padding(
+                        padding: const EdgeInsets.all(1),
+                        child: Text(
+                            "Click on the star button to mark the note as favorite. "
+                                "It will be shown on the top of the list of notes.",
+                            style: TextStyle(color: Colors.white),
+                            textAlign: TextAlign.center),
                       ))),
             ),
           ),

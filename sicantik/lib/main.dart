@@ -52,6 +52,7 @@ class MyApp extends StatelessWidget {
 
     return GlobalLoaderOverlay(
         child: GetMaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: themeData,
       translations: Messages(),
       enableLog: false,

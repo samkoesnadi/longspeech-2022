@@ -32,7 +32,7 @@ BoxScrollView generateListView(
         String description = cardData[index].description;
 
         const summarizedMaxLength = 600;
-        const titleMaxLength = 20;
+        const titleMaxLength = 1000;
 
         if (description.length > summarizedMaxLength) {
           description = "${description.substring(0, summarizedMaxLength)}...";
@@ -41,18 +41,15 @@ BoxScrollView generateListView(
           headline = "${headline.substring(0, titleMaxLength)}...";
         }
 
-        List<Widget> titleRowContent = <Widget>[
-          Expanded(child: cardDivider),
-          Text(headline,
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Expanded(child: cardDivider)
-        ];
-        if (cardData[index].trailing != null) {
-          titleRowContent.addAll(cardData[index].trailing!);
-        }
-        Widget titleWidget = Row(children: titleRowContent);
-
+        Widget titleWidget = ListTile(
+            title: Text(headline,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
+            trailing: Row(
+                children: cardData[index].trailing!,
+                mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+            ));
         return _wrapScrollTag(
             index: index,
             noteId: cardData[index].noteId ?? '',
