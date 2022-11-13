@@ -32,12 +32,18 @@ class _DigitalInkViewState extends State<DigitalInkView> {
           String selectedLanguageCode =
               commonStorage.read("inkRecognitionLanguage") ?? "en";
 
+          List<String> detectedWord = ["none"];
+          commonStorage.writeInMemory(
+              "detectedWord_temp", detectedWord);
           await Alert(
               context: context,
               content: Flex(
                 direction: Axis.vertical,
                 children: [
-                  const Text('Ink recognition language:', style: TextStyle(fontSize: 14),),
+                  const Text(
+                    'Ink recognition language:',
+                    style: TextStyle(fontSize: 14),
+                  ),
                   StatefulBuilder(
                       builder: (BuildContext context, StateSetter setState) {
                     return DropdownButton<String>(
@@ -65,29 +71,38 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                 DialogButton(
                     child: const Text("OK"),
                     onPressed: () async {
-                      context.loaderOverlay.show();
-
                       await commonStorage.write(
                           "inkRecognitionLanguage", selectedLanguageCode);
 
                       final DigitalInkRecognizerModelManager modelManager =
-                        DigitalInkRecognizerModelManager();
+                          DigitalInkRecognizerModelManager();
 
-                      bool downloaded = await modelManager.isModelDownloaded(selectedLanguageCode);
+                      bool downloaded = await modelManager
+                          .isModelDownloaded(selectedLanguageCode);
                       if (!downloaded) {
                         await Fluttertoast.showToast(
                             msg: "Downloading ink recognizer model",
                             toastLength: Toast.LENGTH_SHORT);
                       }
 
-                      bool success = await modelManager
-                          .downloadModel(selectedLanguageCode);
+                      context.loaderOverlay.show();
+
+                      bool success = true;
+
+                      if (!downloaded) {
+                        try {
+                          success = await modelManager
+                              .downloadModel(selectedLanguageCode);
+                        } catch (err) {
+                          success = false;
+                          logger.e(err);
+                        }
+                      }
+
                       if (success) {
                         final DigitalInkRecognizer _digitalInkRecognizer =
                             DigitalInkRecognizer(
                                 languageCode: selectedLanguageCode);
-
-                        List<String> detectedWord = ["none"];
 
                         String toastText = "Detected candidates:";
                         try {
@@ -106,7 +121,7 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                         await Fluttertoast.showToast(
                             msg: toastText, toastLength: Toast.LENGTH_LONG);
 
-                        await commonStorage.write(
+                        commonStorage.writeInMemory(
                             "detectedWord_temp", detectedWord);
 
                         _digitalInkRecognizer.close();
@@ -115,10 +130,10 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                         await Fluttertoast.showToast(
                             msg: "Ink recognizer model cannot be downloaded");
                       }
-                      context.loaderOverlay.hide();
                       Get.back();
                     })
               ]).show();
+          context.loaderOverlay.hide();
 
           // recreate Canvas with only the content
           PictureRecorder recorder = PictureRecorder();
@@ -130,37 +145,44 @@ class _DigitalInkViewState extends State<DigitalInkView> {
             ..strokeCap = StrokeCap.round
             ..strokeWidth = 4.0;
 
-          double top = _ink.strokes[0].points[0].y.toDouble();
-          double left = _ink.strokes[0].points[0].x.toDouble();
-          double right = _ink.strokes[0].points[0].x.toDouble();
-          double bottom = _ink.strokes[0].points[0].y.toDouble();
+          double top = 0;
+          double left = 0;
+          double right = 100;
+          double bottom = 100;
 
-          for (final stroke in _ink.strokes) {
-            for (int i = 0; i < stroke.points.length - 1; i++) {
-              final p1 = stroke.points[i];
-              final p2 = stroke.points[i + 1];
+          if (_ink.strokes.length > 0) {
+            top = _ink.strokes[0].points[0].y.toDouble();
+            left = _ink.strokes[0].points[0].x.toDouble();
+            right = _ink.strokes[0].points[0].x.toDouble();
+            bottom = _ink.strokes[0].points[0].y.toDouble();
 
-              top = min(top, min(p1.y.toDouble(), p2.y.toDouble()));
-              left = min(left, min(p1.x.toDouble(), p2.x.toDouble()));
-              right = max(right, max(p1.x.toDouble(), p2.x.toDouble()));
-              bottom = max(bottom, max(p1.y.toDouble(), p2.y.toDouble()));
+            for (final stroke in _ink.strokes) {
+              for (int i = 0; i < stroke.points.length - 1; i++) {
+                final p1 = stroke.points[i];
+                final p2 = stroke.points[i + 1];
+
+                top = min(top, min(p1.y.toDouble(), p2.y.toDouble()));
+                left = min(left, min(p1.x.toDouble(), p2.x.toDouble()));
+                right = max(right, max(p1.x.toDouble(), p2.x.toDouble()));
+                bottom = max(bottom, max(p1.y.toDouble(), p2.y.toDouble()));
+              }
             }
-          }
 
-          top = max(0, top - 5);
-          left = max(0, left - 5);
-          right += 5;
-          bottom += 5;
+            top = max(0, top - 5);
+            left = max(0, left - 5);
+            right += 5;
+            bottom += 5;
 
-          for (final stroke in _ink.strokes) {
-            for (int i = 0; i < stroke.points.length - 1; i++) {
-              final p1 = stroke.points[i];
-              final p2 = stroke.points[i + 1];
+            for (final stroke in _ink.strokes) {
+              for (int i = 0; i < stroke.points.length - 1; i++) {
+                final p1 = stroke.points[i];
+                final p2 = stroke.points[i + 1];
 
-              canvas.drawLine(
-                  Offset(p1.x.toDouble() - left, p1.y.toDouble() - top),
-                  Offset(p2.x.toDouble() - left, p2.y.toDouble() - top),
-                  paint);
+                canvas.drawLine(
+                    Offset(p1.x.toDouble() - left, p1.y.toDouble() - top),
+                    Offset(p2.x.toDouble() - left, p2.y.toDouble() - top),
+                    paint);
+              }
             }
           }
 
@@ -173,7 +195,7 @@ class _DigitalInkViewState extends State<DigitalInkView> {
           return true;
         },
         child: Scaffold(
-          appBar: AppBar(title: Text('Canvas')),
+          appBar: AppBar(title: Text('Handwriting')),
           backgroundColor: Colors.white,
           body: SafeArea(
             child: Column(

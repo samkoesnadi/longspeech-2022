@@ -152,7 +152,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                 toolbarKey: toolbarKey,
                 appBarKey: appBarKey,
                 child: Column(children: [
-                  const Padding(padding: EdgeInsets.all(5)),
+                  const Padding(padding: EdgeInsets.all(0)),
                   Flexible(
                       fit: FlexFit.loose,
                       child: RawKeyboardListener(
@@ -521,7 +521,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
             flex: 15,
             child: Container(
               color: Colors.white,
-              padding: const EdgeInsets.only(left: 16, right: 16),
+              padding: const EdgeInsets.all(0),
               child: myQuillEditor.generateQuillEditor(
                   onImageRemove: (String imageUrl) {
                     File(imageUrl).delete();

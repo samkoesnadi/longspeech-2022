@@ -179,7 +179,7 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
                 children: [
                   // view
                   Padding(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(0),
                     child: Container(
                       child: myQuillEditor.generateQuillEditor(
                           readOnly: true, imageArguments: imageClassifications),

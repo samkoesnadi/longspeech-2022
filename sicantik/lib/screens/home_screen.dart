@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:bubble_showcase/bubble_showcase.dart';
 import 'package:flutter/material.dart';
 import 'package:fuzzy/data/result.dart';
 import 'package:fuzzy/fuzzy.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:sicantik/helpers/document.dart';
@@ -44,6 +47,7 @@ Set<int> search(List<String> input, String searchKey) {
 
 class HomeScreenState extends State<HomeScreen> {
   late AutoScrollController _scrollController;
+  // StreamSubscription<List<PurchaseDetails>> _inAppPurchaseSubscription;
 
   final TextEditingController _searchTextController =
       TextEditingController(text: "");
@@ -79,6 +83,51 @@ class HomeScreenState extends State<HomeScreen> {
     if (arguments != null && arguments.containsKey("noteId")) {
       noteId = Get.arguments["noteId"];
     }
+
+    // final Stream purchaseUpdated =
+    //     InAppPurchase.instance.purchaseStream;
+    // _inAppPurchaseSubscription = purchaseUpdated.listen((purchaseDetailsList) {
+    //   _listenToPurchaseUpdated(purchaseDetailsList);
+    // }, onDone: () {
+    //   _inAppPurchaseSubscription.cancel();
+    // }, onError: (error) {
+    //   // handle error here.
+    // });
+
+    // final bool available = await InAppPurchase.instance.isAvailable();
+    // if (!available) {
+    //   // The store cannot be reached or accessed. Update the UI accordingly.
+    // }
+  }
+
+  // void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
+  //   purchaseDetailsList.forEach((PurchaseDetails purchaseDetails) async {
+  //     if (purchaseDetails.status == PurchaseStatus.pending) {
+  //       _showPendingUI();
+  //     } else {
+  //       if (purchaseDetails.status == PurchaseStatus.error) {
+  //         _handleError(purchaseDetails.error!);
+  //       } else if (purchaseDetails.status == PurchaseStatus.purchased ||
+  //           purchaseDetails.status == PurchaseStatus.restored) {
+  //         bool valid = await _verifyPurchase(purchaseDetails);
+  //         if (valid) {
+  //           _deliverProduct(purchaseDetails);
+  //         } else {
+  //           _handleInvalidPurchase(purchaseDetails);
+  //         }
+  //       }
+  //       if (purchaseDetails.pendingCompletePurchase) {
+  //         await InAppPurchase.instance
+  //             .completePurchase(purchaseDetails);
+  //       }
+  //     }
+  //   });
+  // }
+
+  @override
+  void dispose() {
+    // _inAppPurchaseSubscription.cancel();
+    super.dispose();
   }
 
   void initCardData() {

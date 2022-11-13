@@ -46,7 +46,7 @@ class MyQuillEditor {
       placeholder: newNotePlaceholderOptions[
           _random.nextInt(newNotePlaceholderOptions.length)],
       expands: false,
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.all(15),
       onImagePaste: _onImagePaste,
       customStyles: DefaultStyles(
           h1: DefaultTextBlockStyle(

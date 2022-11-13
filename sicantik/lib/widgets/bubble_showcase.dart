@@ -140,7 +140,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
-                            "Try out speech recognition to write with your voice\n"
+                            "Try out speech-to-text to write with your voice\n"
                             "Or you want to simply record voices of any presentation or lecture, maybe?",
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center),
@@ -161,7 +161,10 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(1),
                         child: Text(
-                          "You can even write with your finger on screen, and the AI will tell you what you write. You can also save this handwriting in the image gallery by clicking on the image -> Save",
+                          "You can even write with your finger on screen, and "
+                          "the AI will tell you what you write. "
+                          "You can also save this handwriting in the "
+                          "image gallery by clicking on the image -> Save",
                           style: TextStyle(color: Colors.white),
                           textAlign: TextAlign.center,
                         ),

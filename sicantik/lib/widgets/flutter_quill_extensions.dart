@@ -115,8 +115,13 @@ class MyImageEmbedBuilder implements EmbedBuilder {
     final imageUrl = standardizeImageUrl(node.value.data);
 
     List<String> detectedObjects = [];
+    bool showDetectedObjects = false;
+
     if (imageArguments != null) {
-      detectedObjects = imageArguments![imageUrl]!.cast<String>();
+      if (imageArguments!.containsKey(imageUrl)) {
+        detectedObjects = imageArguments![imageUrl]!.cast<String>();
+        showDetectedObjects = true;
+      }
     }
     if (detectedObjects.isEmpty) {
       detectedObjects = ["none"];
@@ -154,14 +159,17 @@ class MyImageEmbedBuilder implements EmbedBuilder {
       _widthHeight = Tuple2((image as Image).width, image.height);
     }
 
-    Widget textWidget = Align(
-      alignment: Alignment.center,
-      child: SelectableText(
-        "Detected:\n${detectedObjects.join(", ")}\n",
-        style: TextStyle(fontSize: 12),
-        textAlign: TextAlign.center,
-      ),
-    );
+    Widget textWidget = const SizedBox.shrink();
+    if (showDetectedObjects) {
+      textWidget = Align(
+        alignment: Alignment.center,
+        child: SelectableText(
+          "Detected:\n${detectedObjects.join(", ")}\n",
+          style: TextStyle(fontSize: 12),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
 
     if (!readOnly && base.isMobile()) {
       return GestureDetector(
@@ -444,7 +452,7 @@ var speechRecordPickSettingSelector = (context) => showDialog<String>(
                 Icons.video_call,
                 color: Colors.cyanAccent,
               ),
-              label: Text('Speech recognition',
+              label: Text('Speech-to-text',
                   style: TextStyle(color: Colors.white)),
               onPressed: () => Navigator.pop(ctx, "SpeechRecognition"),
             )
