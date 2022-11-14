@@ -5,6 +5,7 @@
 * box
   * speechToTextLanguage
   * inkRecognitionLanguage
+  * fullVersion
 
 * Notes box
   * noteIds : list of all noteId

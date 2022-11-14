@@ -12,6 +12,7 @@ var logger = Logger(
   printer: PrettyPrinter(),
 );
 
+int fullVersionNoteAmount = 5;
 DateFormat dateFormat = DateFormat("yyyy-MM-dd HH:mm");
 const allPossibleSymbols = "!'§<>|\$%&/()=?\\`´+*#öäüÜÖÄ,.-;:_^{}[]";
 var commonEnglishWords = ew.all +

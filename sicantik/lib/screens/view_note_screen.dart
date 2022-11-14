@@ -315,7 +315,7 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
                   await Share.shareXFiles(
                     [XFile(PDFPath.path)],
                     subject: title,
-                    text: "Created by Expressive App: $title - $description",
+                    text: "Created by Expressive App: $title\n\n$description",
                     sharePositionOrigin:
                         box!.localToGlobal(Offset.zero) & box.size,
                   );

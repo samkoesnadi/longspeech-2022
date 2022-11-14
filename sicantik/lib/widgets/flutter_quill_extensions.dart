@@ -129,6 +129,7 @@ class MyImageEmbedBuilder implements EmbedBuilder {
 
     Tuple2<double?, double?>? _widthHeight;
     final style = node.style.attributes['style'];
+
     if (base.isMobile() && style != null) {
       final _attrs = base.parseKeyValuePairs(style.value.toString(), {
         Attribute.mobileWidth,
@@ -156,7 +157,7 @@ class MyImageEmbedBuilder implements EmbedBuilder {
 
     if (_widthHeight == null) {
       image = imageByUrl(imageUrl);
-      _widthHeight = Tuple2((image as Image).width, image.height);
+      _widthHeight = Tuple2(MediaQuery.of(context).size.width, image.height);
     }
 
     Widget textWidget = const SizedBox.shrink();

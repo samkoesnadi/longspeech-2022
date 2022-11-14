@@ -8,7 +8,6 @@ import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:sicantik/helpers/summarize.dart';
 import 'package:sicantik/utils.dart';
 
@@ -47,6 +46,7 @@ Future<void> saveDocument(
   String plainText = '${quillControllerDocument.toPlainText()}. ';
 
   Map tempImageClassifications = Map.from(imageClassifications);
+  List keywords = [];
   for (final item in tempImageClassifications.entries) {
     // remove unused images
     if (!json.contains(item.key)) {
@@ -57,10 +57,11 @@ Future<void> saveDocument(
       }
       imageClassifications.remove(item.key);
     } else {
-      for (String keyword in item.value) {
-        plainText += '$keyword. ';
-      }
+      keywords.addAll(item.value);
     }
+  }
+  for (String keyword in keywords.toSet().toList()) {
+    plainText += '$keyword. ';
   }
   List tempVoiceRecordings = [...voiceRecordings];
   for (String item in tempVoiceRecordings) {

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bubble_showcase/bubble_showcase.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:fuzzy/data/result.dart';
 import 'package:fuzzy/fuzzy.dart';
 import 'package:get/get.dart';
@@ -47,11 +48,12 @@ Set<int> search(List<String> input, String searchKey) {
 
 class HomeScreenState extends State<HomeScreen> {
   late AutoScrollController _scrollController;
-  // StreamSubscription<List<PurchaseDetails>> _inAppPurchaseSubscription;
+  late StreamSubscription<List<PurchaseDetails>> _inAppPurchaseSubscription;
 
   final TextEditingController _searchTextController =
       TextEditingController(text: "");
   final noteStorage = GetStorage("notes");
+  final boxStorage = GetStorage();
   List<CardData> fullCardData = [];
   RxList cardDataObx = [].obs;
   String? noteId;
@@ -84,45 +86,41 @@ class HomeScreenState extends State<HomeScreen> {
       noteId = Get.arguments["noteId"];
     }
 
-    // final Stream purchaseUpdated =
-    //     InAppPurchase.instance.purchaseStream;
-    // _inAppPurchaseSubscription = purchaseUpdated.listen((purchaseDetailsList) {
-    //   _listenToPurchaseUpdated(purchaseDetailsList);
-    // }, onDone: () {
-    //   _inAppPurchaseSubscription.cancel();
-    // }, onError: (error) {
-    //   // handle error here.
-    // });
-
-    // final bool available = await InAppPurchase.instance.isAvailable();
-    // if (!available) {
-    //   // The store cannot be reached or accessed. Update the UI accordingly.
-    // }
+    final Stream<List<PurchaseDetails>> purchaseUpdated =
+        InAppPurchase.instance.purchaseStream;
+    _inAppPurchaseSubscription = purchaseUpdated.listen((purchaseDetailsList) {
+      _listenToPurchaseUpdated(purchaseDetailsList);
+    }, onDone: () {
+      _inAppPurchaseSubscription.cancel();
+    }, onError: (error) {
+      // handle error here.
+    });
   }
 
-  // void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
-  //   purchaseDetailsList.forEach((PurchaseDetails purchaseDetails) async {
-  //     if (purchaseDetails.status == PurchaseStatus.pending) {
-  //       _showPendingUI();
-  //     } else {
-  //       if (purchaseDetails.status == PurchaseStatus.error) {
-  //         _handleError(purchaseDetails.error!);
-  //       } else if (purchaseDetails.status == PurchaseStatus.purchased ||
-  //           purchaseDetails.status == PurchaseStatus.restored) {
-  //         bool valid = await _verifyPurchase(purchaseDetails);
-  //         if (valid) {
-  //           _deliverProduct(purchaseDetails);
-  //         } else {
-  //           _handleInvalidPurchase(purchaseDetails);
-  //         }
-  //       }
-  //       if (purchaseDetails.pendingCompletePurchase) {
-  //         await InAppPurchase.instance
-  //             .completePurchase(purchaseDetails);
-  //       }
-  //     }
-  //   });
-  // }
+  void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
+    purchaseDetailsList.forEach((PurchaseDetails purchaseDetails) async {
+      if (purchaseDetails.status == PurchaseStatus.pending) {
+        // _showPendingUI();
+      } else {
+        if (purchaseDetails.status == PurchaseStatus.error) {
+          // _handleError(purchaseDetails.error!);
+        } else if (purchaseDetails.status == PurchaseStatus.purchased ||
+            purchaseDetails.status == PurchaseStatus.restored) {
+          // bool valid = await _verifyPurchase(purchaseDetails);
+          // if (valid) {
+          //   _deliverProduct(purchaseDetails);
+          // } else {
+          //   // _handleInvalidPurchase(purchaseDetails);
+          // // }
+          boxStorage.write("fullVersion", true);
+        }
+        if (purchaseDetails.pendingCompletePurchase) {
+          await InAppPurchase.instance
+              .completePurchase(purchaseDetails);
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -254,7 +252,39 @@ class HomeScreenState extends State<HomeScreen> {
         floatingActionButtonIcon: Icons.note_add,
         speedDialOnPress: () async {
           const BubbleShowcaseNotification()..dispatch(context);
-          await Get.to(() => const NewNoteScreen());
+
+          // check fullVersion, if yes continue
+          bool allowAddNote = true;
+          if ((noteStorage.read("noteIds") ?? []).length >= fullVersionNoteAmount) {
+            allowAddNote = boxStorage.read("fullVersion") ?? false;
+          }
+
+          if (allowAddNote) {
+            await Get.to(() => const NewNoteScreen());
+          } else {
+            await Fluttertoast.showToast(msg: "Please buy the full version to have more than $fullVersionNoteAmount notes");
+
+            bool available = await InAppPurchase.instance.isAvailable();
+            if (available) {
+              // Sell full version
+              const Set<String> kIds = <String>{'fullVersion'};  // keep it just one
+              final ProductDetailsResponse response =
+              await InAppPurchase.instance.queryProductDetails(kIds);
+              if (response.notFoundIDs.isNotEmpty) {
+                // Handle the error.
+                return;
+              }
+              List<ProductDetails> products = response.productDetails;
+              ProductDetails fullVersion = products[0];
+
+              final PurchaseParam purchaseParam = PurchaseParam(productDetails: fullVersion);
+              await InAppPurchase.instance.buyNonConsumable(purchaseParam: purchaseParam);
+              // From here the purchase flow will be handled by the underlying store.
+              // Updates will be delivered to the `InAppPurchase.instance.purchaseStream`.
+            } else {
+              await Fluttertoast.showToast(msg: "The Play Store cannot be accessed right now. No internet connection?");
+            }
+          }
         },
         appBarActions: [
           // IconButton(onPressed: () {}, icon: const Icon(Icons.help)),
