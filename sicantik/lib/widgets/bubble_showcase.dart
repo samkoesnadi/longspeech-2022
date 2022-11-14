@@ -2,7 +2,7 @@ import 'package:bubble_showcase/bubble_showcase.dart';
 import 'package:flutter/material.dart';
 import 'package:sicantik/widgets/speech_bubble.dart';
 
-const doNotReopenOnClose = false;
+const doNotReopenOnClose = true;
 int bubbleShowcaseVersion = 1;
 const bubbleColor = Colors.teal;
 const textColor = Colors.white;
