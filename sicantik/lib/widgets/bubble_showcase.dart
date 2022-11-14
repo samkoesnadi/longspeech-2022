@@ -2,7 +2,7 @@ import 'package:bubble_showcase/bubble_showcase.dart';
 import 'package:flutter/material.dart';
 import 'package:sicantik/widgets/speech_bubble.dart';
 
-const doNotReopenOnClose = true;
+const doNotReopenOnClose = false;
 int bubbleShowcaseVersion = 1;
 const bubbleColor = Colors.teal;
 const textColor = Colors.white;
@@ -40,6 +40,31 @@ class BubbleShowcaseHomeScreenWidget extends StatelessWidget {
                           'With love, Samuel.',
                           style: TextStyle(color: Colors.white),
                           textAlign: TextAlign.center),
+                    ),
+                  )),
+            ),
+          ),
+          AbsoluteBubbleSlide(
+            positionCalculator: (size) =>
+                Position(left: 0, top: 0, right: 0, bottom: size.height),
+            child: RelativeBubbleSlideChild(
+              direction: AxisDirection.left,
+              widget: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: SpeechBubble(
+                    nipLocation: NipLocation.LEFT,
+                    color: bubbleColor,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        children: [
+                          Text('First off, I give you one example use case:',
+                              style: TextStyle(color: Colors.white),
+                              textAlign: TextAlign.center),
+                          Padding(padding: EdgeInsets.only(bottom: 3)),
+                          Image.asset("assets/feature.png")
+                        ],
+                      ),
                     ),
                   )),
             ),
@@ -186,7 +211,7 @@ class BubbleShowcaseNewNoteWidget extends StatelessWidget {
                         padding: const EdgeInsets.all(1),
                         child: Text(
                             "Click on the star button to mark the note as favorite. "
-                                "It will be shown on the top of the list of notes.",
+                            "It will be shown on the top of the list of notes.",
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center),
                       ))),
