@@ -262,7 +262,7 @@ class HomeScreenState extends State<HomeScreen> {
           if (allowAddNote) {
             await Get.to(() => const NewNoteScreen());
           } else {
-            await Fluttertoast.showToast(msg: "Please buy the full version to have more than $fullVersionNoteAmount notes");
+            await Fluttertoast.showToast(msg: "Thank you for using the app so far. Please purchase here for more than $fullVersionNoteAmount notes...");
 
             bool available = await InAppPurchase.instance.isAvailable();
             if (available) {
@@ -272,6 +272,7 @@ class HomeScreenState extends State<HomeScreen> {
               await InAppPurchase.instance.queryProductDetails(kIds);
               if (response.notFoundIDs.isNotEmpty) {
                 // Handle the error.
+                await Fluttertoast.showToast(msg: "Expressive app cannot find the item on Play Store");
                 return;
               }
               List<ProductDetails> products = response.productDetails;
