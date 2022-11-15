@@ -44,31 +44,31 @@ class BubbleShowcaseHomeScreenWidget extends StatelessWidget {
                   )),
             ),
           ),
-          AbsoluteBubbleSlide(
-            positionCalculator: (size) =>
-                Position(left: 0, top: 0, right: 0, bottom: size.height),
-            child: RelativeBubbleSlideChild(
-              direction: AxisDirection.left,
-              widget: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: SpeechBubble(
-                    nipLocation: NipLocation.LEFT,
-                    color: bubbleColor,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Column(
-                        children: [
-                          Text('First off, I give you one example use case:',
-                              style: TextStyle(color: Colors.white),
-                              textAlign: TextAlign.center),
-                          Padding(padding: EdgeInsets.only(bottom: 3)),
-                          Image.asset("assets/feature.png")
-                        ],
-                      ),
-                    ),
-                  )),
-            ),
-          ),
+          // AbsoluteBubbleSlide(
+          //   positionCalculator: (size) =>
+          //       Position(left: 0, top: 0, right: 0, bottom: size.height),
+          //   child: RelativeBubbleSlideChild(
+          //     direction: AxisDirection.left,
+          //     widget: Padding(
+          //         padding: const EdgeInsets.all(10),
+          //         child: SpeechBubble(
+          //           nipLocation: NipLocation.LEFT,
+          //           color: bubbleColor,
+          //           child: Padding(
+          //             padding: const EdgeInsets.all(10),
+          //             child: Column(
+          //               children: [
+          //                 Text('First off, I give you one example use case:',
+          //                     style: TextStyle(color: Colors.white),
+          //                     textAlign: TextAlign.center),
+          //                 Padding(padding: EdgeInsets.only(bottom: 3)),
+          //                 Image.asset("assets/feature.png")
+          //               ],
+          //             ),
+          //           ),
+          //         )),
+          //   ),
+          // ),
           RelativeBubbleSlide(
             widgetKey: buttonKey,
             highlightPadding: 4,

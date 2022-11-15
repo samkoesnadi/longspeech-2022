@@ -76,12 +76,6 @@ class SpeechToTextHandler {
   List<LocaleName> get localNames => localeNames;
 
   Future<void> _listen() async {
-    bool available = await initSpeechState();
-
-    if (!available) {
-      errorListener("Speech recognizer cannot be initiated");
-    }
-
     // Note that `listenFor` is the maximum, not the minimun, on some
     // systems recognition will be stopped before this value is reached.
     // Similarly `pauseFor` is a maximum not a minimum and may be ignored
@@ -115,24 +109,17 @@ class SpeechToTextHandler {
     _speech.stop();
   }
 
-  Future<bool> initSpeechState() {
-    return preInitSpeechState(
-        errorListener: _errorListener, statusListener: _statusListener);
-  }
-
   /// This initializes SpeechToText. That only has to be done
   /// once per application, though calling it again is harmless
   /// it also does nothing. The UX of the sample app ensures that
   /// it can only be called once.
-  static Future<bool> preInitSpeechState(
-      {SpeechErrorListener? errorListener,
-      SpeechStatusListener? statusListener}) async {
+  Future<bool> initSpeechState() async {
     bool ready = true;
 
     try {
       var hasSpeech = await _speech.initialize(
-        onError: errorListener,
-        onStatus: statusListener,
+        onError: _errorListener,
+        onStatus: _statusListener,
         debugLogging: true,
         options: [SpeechToText.androidIntentLookup],
       );

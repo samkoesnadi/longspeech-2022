@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:delta_to_html/delta_to_html.dart';
 import 'package:flutter_html_to_pdf/flutter_html_to_pdf.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
+import 'package:sicantik/helpers/delta_to_html.dart';
 import 'package:sicantik/helpers/summarize.dart';
 import 'package:sicantik/utils.dart';
 
@@ -45,8 +45,41 @@ Future<void> saveDocument(
 
   String plainText = '${quillControllerDocument.toPlainText()}. ';
 
+  List keywords = await manageResources(
+      quillControllerDocument, imageClassifications, voiceRecordings, videos);
+  for (String keyword in keywords) {
+    plainText += '$keyword. ';
+  }
+
+  Map<String, dynamic> aiAnalysisResult = await aiAnalysis(plainText);
+
+  Map<String, dynamic> noteMetadata = noteStorage.read(noteId) ?? {};
+  noteMetadata["title"] = title;
+  noteMetadata["editedAt"] = DateTime.now().toString();
+  noteMetadata["summarized"] = aiAnalysisResult["summarized"];
+  noteMetadata["wordCount"] = aiAnalysisResult["wordCount"];
+
+  await noteStorage.write(noteId, noteMetadata);
+  await noteStorage.write("$noteId-ners", aiAnalysisResult["entities"]);
+  await noteStorage.write("$noteId-imageClassifications", imageClassifications);
+  await noteStorage.write("$noteId-videos", videos);
+  await noteStorage.write("$noteId-voiceRecordings", voiceRecordings);
+  await noteStorage.write(
+      "$noteId-detectedLanguages", aiAnalysisResult["detectedLanguages"]);
+  await noteStorage.write("noteIds",
+      ((noteStorage.read("noteIds") ?? []) + [noteId]).toSet().toList());
+  await saveStarred(isStarred, noteId);
+}
+
+Future<List<String>> manageResources(
+    Document quillControllerDocument,
+    Map<String, dynamic> imageClassifications,
+    List<String> voiceRecordings,
+    List<String> videos) async {
+  var json = jsonEncode(quillControllerDocument.toDelta().toJson());
+
   Map tempImageClassifications = Map.from(imageClassifications);
-  List keywords = [];
+  List<String> keywords = [];
   for (final item in tempImageClassifications.entries) {
     // remove unused images
     if (!json.contains(item.key)) {
@@ -57,12 +90,10 @@ Future<void> saveDocument(
       }
       imageClassifications.remove(item.key);
     } else {
-      keywords.addAll(item.value);
+      keywords.addAll(item.value.cast<String>());
     }
   }
-  for (String keyword in keywords.toSet().toList()) {
-    plainText += '$keyword. ';
-  }
+
   List tempVoiceRecordings = [...voiceRecordings];
   for (String item in tempVoiceRecordings) {
     // remove unused images
@@ -88,24 +119,7 @@ Future<void> saveDocument(
     }
   }
 
-  Map<String, dynamic> aiAnalysisResult = await aiAnalysis(plainText);
-
-  Map<String, dynamic> noteMetadata = noteStorage.read(noteId) ?? {};
-  noteMetadata["title"] = title;
-  noteMetadata["editedAt"] = DateTime.now().toString();
-  noteMetadata["summarized"] = aiAnalysisResult["summarized"];
-  noteMetadata["wordCount"] = aiAnalysisResult["wordCount"];
-
-  await noteStorage.write(noteId, noteMetadata);
-  await noteStorage.write("$noteId-ners", aiAnalysisResult["entities"]);
-  await noteStorage.write("$noteId-imageClassifications", imageClassifications);
-  await noteStorage.write("$noteId-videos", videos);
-  await noteStorage.write("$noteId-voiceRecordings", voiceRecordings);
-  await noteStorage.write(
-      "$noteId-detectedLanguages", aiAnalysisResult["detectedLanguages"]);
-  await noteStorage.write("noteIds",
-      ((noteStorage.read("noteIds") ?? []) + [noteId]).toSet().toList());
-  await saveStarred(isStarred, noteId);
+  return keywords.toSet().toList();
 }
 
 Future<void> deleteDocument(String noteId) async {
@@ -242,8 +256,24 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
 }
 
 Future<File> exportToPDF(List json, String dirPath, String fileName) async {
-  String htmlContent = DeltaToHTML.encodeJson(json);
+  for (Map<String, dynamic> elem in json) {
+    print(elem);
+    if (elem["insert"] is Map<String, dynamic>) {
+      if (elem["insert"].containsKey("image")) {
+        // elem["insert"]["image"] = elem["insert"]["image"].toString() +
+        //     "' style='text-align:center; display:block;";
+        if (!elem.containsKey("attributes")) {
+          elem["attributes"] = {"style": "width: 50%; "};
+        }
+      }
+    }
+  }
+  String htmlContent = jsonToHtml(json);
   htmlContent = htmlContent.replaceAll("src='/", "src='file:///");
+  htmlContent = htmlContent.replaceAllMapped(
+      RegExp(r"\bsrc='(https://.*)/watch\?v=([^&]+).*?'"), (Match match) {
+    return "src='${match[1]}/embed/${match[2]}'";
+  });
 
   var generatedPdfFile = await FlutterHtmlToPdf.convertFromHtmlContent(
       htmlContent, dirPath, fileName);

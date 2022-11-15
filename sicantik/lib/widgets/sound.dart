@@ -8,11 +8,12 @@ import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sicantik/utils.dart';
 
 const _codec = Codec.defaultCodec;
-const _channel = 2;
-const _bitRate = 256;
-const _samplingRate = 48;
+const _channel = 1;
+const _bitRate = 256000;
+const _samplingRate = 48000;
 
 class RecordSoundRecorder {
   RxString _recorderTxt = '00:00:00'.obs;
@@ -188,7 +189,12 @@ class PlayerSoundRecorder {
   }
 
   Future<void> _initialize() async {
-    await playerModule.closePlayer();
+    try {
+      await playerModule.closePlayer();
+    } catch (err) {
+      logger.e(err);
+    }
+
     await playerModule.openPlayer();
     await playerModule
         .setSubscriptionDuration(const Duration(milliseconds: 100));

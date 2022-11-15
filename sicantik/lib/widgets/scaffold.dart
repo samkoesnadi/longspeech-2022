@@ -132,7 +132,6 @@ class _MyScaffold extends State<MyScaffold> {
           centerTitle: false,
           leading: widget.leading,
           title: widget.title,
-          titleSpacing: 0.0,
           bottom: widget.appBarBottom,
           actions: widget.appBarActions,
         ),

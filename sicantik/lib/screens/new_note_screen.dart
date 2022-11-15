@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:flutter_quill_extensions/embeds/widgets/image.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -82,7 +83,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
 
     imageClassifications =
         noteStorage.read("$noteId-imageClassifications") ?? {};
-    voiceRecordings = noteStorage.read("$noteId-voiceRecordings")?.cast<String>() ?? [];
+    voiceRecordings =
+        noteStorage.read("$noteId-voiceRecordings")?.cast<String>() ?? [];
     videos = noteStorage.read("$noteId-videos")?.cast<String>() ?? [];
   }
 
@@ -109,8 +111,10 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                                 .primaryTextTheme
                                 .headline1
                                 ?.color)),
-                    onPressed: () {
+                    onPressed: () async {
                       Get.back();
+                      await manageResources(_quillController.document,
+                          imageClassifications, voiceRecordings, videos);
                       if (noteStorage.hasData(noteId)) {
                         Get.off(() => const ViewNoteScreen(),
                             arguments: {"noteId": noteId});
@@ -137,7 +141,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                           voiceRecordings,
                           videos);
                       Fluttertoast.cancel();
-                      await Fluttertoast.showToast(msg: "The document is saved");
+                      await Fluttertoast.showToast(
+                          msg: "The document is saved");
                       context.loaderOverlay.hide();
                       Get.off(() => const ViewNoteScreen(),
                           arguments: {"noteId": noteId});
@@ -221,8 +226,12 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
   Future<String> _onImagePickCallback(File file) async {
     // Copies the picked file from temporary cache to applications directory
     final appDocDir = await getApplicationDocumentsDirectory();
-    final copiedFile =
-        await file.copy('${appDocDir.path}/${basename(file.path)}');
+    String targetPath = '${appDocDir.path}/${basename(file.path)}';
+    File? copiedFile = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path, targetPath,
+      keepExif: true
+    );
+    copiedFile ??= file.copySync(targetPath);
 
     // Process image labeling
     final labels = await processImageLabeling(copiedFile.path);
@@ -243,7 +252,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
     String localPath = copiedFile.path.toString();
 
     imageClassifications[standardizeImageUrl(localPath)] = detectedObjects;
-    await Fluttertoast.showToast(msg: toastText, toastLength: Toast.LENGTH_LONG);
+    await Fluttertoast.showToast(
+        msg: toastText, toastLength: Toast.LENGTH_LONG);
 
     return localPath;
   }
@@ -338,7 +348,9 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                         await recordSoundRecorder.startRecorder(audioFilePath);
                         await Alert(
                             context: context,
-                            style: const AlertStyle(isOverlayTapDismiss: false, isCloseButton: false),
+                            style: const AlertStyle(
+                                isOverlayTapDismiss: false,
+                                isCloseButton: false),
                             onWillPopActive: true,
                             content: StatefulBuilder(
                                 builder: (BuildContext context,
@@ -362,11 +374,26 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                         voiceRecordings.add(audioFilePath);
                         break;
                       case "SpeechRecognition":
-                        if (!await SpeechToTextHandler.preInitSpeechState()) {
+                        final partialTextController =
+                            "Waiting for input...".obs;
+                        final speechToTextHandler = SpeechToTextHandler(
+                            partialResultListener: (String partialText,
+                                String fullText, int lastTextCount) {
+                          partialTextController.value =
+                              SpeechToTextHandler.combineSentences(
+                                  fullText, lastTextCount, partialText)[0];
+                          partialTextController.refresh();
+                        }, errorListener: (String errorText) {
+                          partialTextController.value = "Error: $errorText";
+                          partialTextController.refresh();
+                        });
+
+                        if (!await speechToTextHandler.initSpeechState()) {
                           Alert(
                                   context: context,
                                   type: AlertType.error,
-                                  title: "No speech")
+                                  title:
+                                      "Speech recognizer cannot be initiated")
                               .show();
                         } else {
                           Alert(
@@ -408,27 +435,12 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                                 onPressed: () async {
                                   Get.back();
 
-                                  final partialTextController =
-                                      "Waiting for input...".obs;
-                                  final speechToTextHandler =
-                                      SpeechToTextHandler(partialResultListener:
-                                          (String partialText, String fullText,
-                                              int lastTextCount) {
-                                    partialTextController.value =
-                                        SpeechToTextHandler.combineSentences(
-                                            fullText,
-                                            lastTextCount,
-                                            partialText)[0];
-                                    partialTextController.refresh();
-                                  }, errorListener: (String errorText) {
-                                    partialTextController.value =
-                                        "Error: $errorText";
-                                    partialTextController.refresh();
-                                  });
                                   speechToTextHandler.listen();
                                   Alert(
                                       context: context,
-                                      style: const AlertStyle(isOverlayTapDismiss: false, isCloseButton: false),
+                                      style: const AlertStyle(
+                                          isOverlayTapDismiss: false,
+                                          isCloseButton: false),
                                       onWillPopActive: true,
                                       content: Obx(() =>
                                           Text(partialTextController.value)),
