@@ -43,7 +43,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
   final noteStorage = GetStorage("notes");
   late String noteId;
   late List<String> allStarred;
-  bool isStarred = false;
+  late bool isStarred;
 
   // keep track of resources to remove because quill does not do that
   late Map<String, dynamic> imageClassifications;
@@ -77,6 +77,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
     _quillController = QuillController(
         document: doc, selection: const TextSelection.collapsed(offset: 0));
     allStarred = noteStorage.read("starred")?.cast<String>() ?? [];
+    isStarred = allStarred.contains(noteId);
 
     myQuillEditor =
         MyQuillEditor(quillController: _quillController, focusNode: _focusNode);
