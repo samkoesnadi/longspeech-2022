@@ -71,6 +71,8 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                 DialogButton(
                     child: const Text("OK"),
                     onPressed: () async {
+                      context.loaderOverlay.show();
+
                       await commonStorage.write(
                           "inkRecognitionLanguage", selectedLanguageCode);
 
@@ -84,9 +86,6 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                             msg: "Downloading ink recognizer model",
                             toastLength: Toast.LENGTH_SHORT);
                       }
-
-                      context.loaderOverlay.show();
-
                       bool success = true;
 
                       if (!downloaded) {
@@ -106,12 +105,19 @@ class _DigitalInkViewState extends State<DigitalInkView> {
 
                         String toastText = "Detected candidates:";
                         try {
-                          final candidates =
+                          List<RecognitionCandidate> candidates =
                               await _digitalInkRecognizer.recognize(_ink);
-                          detectedWord[0] = candidates[0].text;
 
-                          for (final candidate in candidates) {
-                            toastText += '\n- ${candidate.text}';
+                          candidates.removeWhere((element) => element.score < 0.1);
+
+                          if (candidates.isNotEmpty) {
+                            detectedWord[0] = candidates[0].text;
+
+                            for (final candidate in candidates) {
+                              toastText += '\n- ${candidate.text}';
+                            }
+                          } else {
+                            toastText += '\nnone';
                           }
                         } catch (e) {
                           logger.e(e.toString());
@@ -130,10 +136,11 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                         await Fluttertoast.showToast(
                             msg: "Ink recognizer model cannot be downloaded");
                       }
+                      context.loaderOverlay.hide();
+
                       Get.back();
                     })
               ]).show();
-          context.loaderOverlay.hide();
 
           // recreate Canvas with only the content
           PictureRecorder recorder = PictureRecorder();
