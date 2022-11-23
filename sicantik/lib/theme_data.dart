@@ -24,7 +24,7 @@ const MaterialColor grey = MaterialColor(
     900: Color(0xFF212121),
   },
 );
-const int _greyPrimaryValue = 0xFFD6D6D6;
+const int _greyPrimaryValue = 0xFFFAFAFA;
 
 final themeData = ThemeData(
     primarySwatch: grey,

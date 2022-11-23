@@ -179,7 +179,7 @@ class HomeScreenState extends State<HomeScreen> {
           ]).show();
         },
         icon:
-            Icon(Icons.delete_outline, color: Theme.of(context).primaryColor)));
+            Icon(Icons.delete_outline)));
     String summarized = note["summarized"];
     String title = note["title"];
 
