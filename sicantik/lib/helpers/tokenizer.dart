@@ -1,4 +1,5 @@
 import 'package:document_analysis/src/structure.dart';
+import 'package:sicantik/utils.dart';
 
 ///Simple document tokenization.
 ///
@@ -19,6 +20,9 @@ TokenizationOutput documentTokenizer(List<String> documentList,
         .toLowerCase()
         .replaceAll(RegExp(r"[^a-z0-9\-_ ]"), "")
         .split(" ");
+    words.removeWhere((element) =>
+        allPossibleSymbols.contains(element) ||
+        commonEnglishWords.contains(element));
     List<String> contentWords = [];
 
     if (words.length >= minLen) {

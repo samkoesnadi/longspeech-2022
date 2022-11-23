@@ -24,6 +24,25 @@ class _DigitalInkViewState extends State<DigitalInkView> {
   final Ink _ink = Ink();
   List<StrokePoint> _points = [];
 
+  void storeStrokePosition(dynamic details) {
+    setState(() {
+      final RenderObject? object = context.findRenderObject();
+      final localPosition =
+          (object as RenderBox?)?.globalToLocal(details.localPosition);
+      if (localPosition != null) {
+        _points = List.from(_points)
+          ..add(StrokePoint(
+            x: localPosition.dx,
+            y: localPosition.dy,
+            t: DateTime.now().millisecondsSinceEpoch,
+          ));
+      }
+      if (_ink.strokes.isNotEmpty) {
+        _ink.strokes.last.points = _points.toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -32,9 +51,8 @@ class _DigitalInkViewState extends State<DigitalInkView> {
           String selectedLanguageCode =
               commonStorage.read("inkRecognitionLanguage") ?? "en";
 
-          List<String> detectedWord = ["none"];
-          commonStorage.writeInMemory(
-              "detectedWord_temp", detectedWord);
+          List<String> detectedWord = [];
+          commonStorage.writeInMemory("detectedWord_temp", detectedWord);
           await Alert(
               context: context,
               content: Flex(
@@ -69,7 +87,12 @@ class _DigitalInkViewState extends State<DigitalInkView> {
               ),
               buttons: [
                 DialogButton(
-                    child: const Text("OK"),
+                    color: Colors.grey,
+                    child:
+                    Text("No AI", style: TextStyle(color: Colors.white70)),
+                    onPressed: () => Get.back()),
+                DialogButton(
+                    child: const Text("Continue"),
                     onPressed: () async {
                       context.loaderOverlay.show();
 
@@ -83,7 +106,7 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                           .isModelDownloaded(selectedLanguageCode);
                       if (!downloaded) {
                         await Fluttertoast.showToast(
-                            msg: "Downloading ink recognizer model",
+                            msg: "Downloading ink recognizer model. This takes some seconds...",
                             toastLength: Toast.LENGTH_SHORT);
                       }
                       bool success = true;
@@ -108,10 +131,11 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                           List<RecognitionCandidate> candidates =
                               await _digitalInkRecognizer.recognize(_ink);
 
-                          candidates.removeWhere((element) => element.score < 0.1);
+                          // candidates
+                          //     .removeWhere((element) => element.score < 0.1);
 
                           if (candidates.isNotEmpty) {
-                            detectedWord[0] = candidates[0].text;
+                            detectedWord.add(candidates[0].text);
 
                             for (final candidate in candidates) {
                               toastText += '\n- ${candidate.text}';
@@ -147,31 +171,25 @@ class _DigitalInkViewState extends State<DigitalInkView> {
           Canvas canvas = Canvas(recorder);
 
           // enter the loop
-          final Paint paint = Paint()
-            ..color = Colors.black
-            ..strokeCap = StrokeCap.round
-            ..strokeWidth = 4.0;
-
           double top = 0;
           double left = 0;
           double right = 100;
           double bottom = 100;
 
-          if (_ink.strokes.length > 0) {
+          if (_ink.strokes.isNotEmpty) {
             top = _ink.strokes[0].points[0].y.toDouble();
             left = _ink.strokes[0].points[0].x.toDouble();
             right = _ink.strokes[0].points[0].x.toDouble();
             bottom = _ink.strokes[0].points[0].y.toDouble();
 
             for (final stroke in _ink.strokes) {
-              for (int i = 0; i < stroke.points.length - 1; i++) {
+              for (int i = 0; i < stroke.points.length; i++) {
                 final p1 = stroke.points[i];
-                final p2 = stroke.points[i + 1];
 
-                top = min(top, min(p1.y.toDouble(), p2.y.toDouble()));
-                left = min(left, min(p1.x.toDouble(), p2.x.toDouble()));
-                right = max(right, max(p1.x.toDouble(), p2.x.toDouble()));
-                bottom = max(bottom, max(p1.y.toDouble(), p2.y.toDouble()));
+                top = min(top, p1.y.toDouble());
+                left = min(left, p1.x.toDouble());
+                right = max(right, p1.x.toDouble());
+                bottom = max(bottom, p1.y.toDouble());
               }
             }
 
@@ -181,16 +199,14 @@ class _DigitalInkViewState extends State<DigitalInkView> {
             bottom += 5;
 
             for (final stroke in _ink.strokes) {
-              for (int i = 0; i < stroke.points.length - 1; i++) {
-                final p1 = stroke.points[i];
-                final p2 = stroke.points[i + 1];
-
-                canvas.drawLine(
-                    Offset(p1.x.toDouble() - left, p1.y.toDouble() - top),
-                    Offset(p2.x.toDouble() - left, p2.y.toDouble() - top),
-                    paint);
+              List<StrokePoint> points = [];
+              for (StrokePoint point in stroke.points) {
+                points.add(StrokePoint(x: point.x - left, y: point.y - top, t: point.t));
               }
+              stroke.points = points;
             }
+
+            drawCanvas(_ink.strokes, canvas);
           }
 
           final picture = recorder.endRecording();
@@ -212,35 +228,28 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                     onTap: () {
                       FocusManager.instance.primaryFocus?.unfocus();
                     },
+                    onTapDown: (TapDownDetails details) {
+                      _ink.strokes.add(Stroke());
+                    },
+                    onTapUp: (TapUpDetails details) {
+                      storeStrokePosition(details);
+                      _points.clear();
+                    },
                     onPanStart: (DragStartDetails details) {
                       _ink.strokes.add(Stroke());
                     },
                     onPanUpdate: (DragUpdateDetails details) {
-                      setState(() {
-                        final RenderObject? object = context.findRenderObject();
-                        final localPosition = (object as RenderBox?)
-                            ?.globalToLocal(details.localPosition);
-                        if (localPosition != null) {
-                          _points = List.from(_points)
-                            ..add(StrokePoint(
-                              x: localPosition.dx,
-                              y: localPosition.dy,
-                              t: DateTime.now().millisecondsSinceEpoch,
-                            ));
-                        }
-                        if (_ink.strokes.isNotEmpty) {
-                          _ink.strokes.last.points = _points.toList();
-                        }
-                      });
+                      storeStrokePosition(details);
                     },
                     onPanEnd: (DragEndDetails details) {
                       _points.clear();
-                      setState(() {});
                     },
-                    child: CustomPaint(
+                    child: RepaintBoundary(
+                        child: CustomPaint(
+                      isComplex: true,
                       painter: Signature(ink: _ink),
                       size: Size.infinite,
-                    ),
+                    )),
                   ),
                 ),
                 Padding(
@@ -280,12 +289,26 @@ class Signature extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..color = Colors.black
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = 4.0;
+    drawCanvas(ink.strokes, canvas);
+  }
 
-    for (final stroke in ink.strokes) {
+  @override
+  bool shouldRepaint(Signature oldDelegate) => true;
+}
+
+void drawCanvas(List<Stroke> strokes, Canvas canvas) {
+  const double strokeWidth = 4.0;
+
+  final Paint paint = Paint()
+    ..color = Colors.black
+    ..strokeCap = StrokeCap.round
+    ..strokeWidth = strokeWidth;
+
+  for (final stroke in strokes) {
+    if (stroke.points.length == 1) {
+      final p1 = stroke.points[0];
+      canvas.drawCircle(Offset(p1.x.toDouble(), p1.y.toDouble()), strokeWidth / 2, paint);
+    } else {
       for (int i = 0; i < stroke.points.length - 1; i++) {
         final p1 = stroke.points[i];
         final p2 = stroke.points[i + 1];
@@ -294,7 +317,4 @@ class Signature extends CustomPainter {
       }
     }
   }
-
-  @override
-  bool shouldRepaint(Signature oldDelegate) => true;
 }

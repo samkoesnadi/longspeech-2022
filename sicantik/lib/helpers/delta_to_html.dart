@@ -1,5 +1,8 @@
+
 jsonToHtml(List delta) {
   StringBuffer html = StringBuffer();
+  bool listActivated = false;
+  String listClosing = "";
 
   //! End Loop Implementation
   delta.add({'insert': ' '});
@@ -36,7 +39,14 @@ jsonToHtml(List delta) {
 
       //~ Normal Text Implementation
       if (!element.containsKey('attributes')) {
-        html.write(element['insert'].toString());
+        String currentText = element['insert'].toString();
+        if (listActivated == true && currentText[0] == '\n') {
+          listActivated = false;
+          currentText = listClosing + currentText;
+          listClosing = "";
+        }
+
+        html.write(currentText);
       } else {
         List blockElements = [
           'header',
@@ -109,6 +119,7 @@ jsonToHtml(List delta) {
               default:
             }
           });
+
           html.write(currentText);
         } else {
           //~ Block Text Implementation
@@ -130,53 +141,92 @@ jsonToHtml(List delta) {
             html.write(dumpyString);
           }
 
-          currentAttributeMap.forEach((key, value) {
-            switch (key.toString()) {
-              case "header":
-                currentText = "<h$value>$blockString</h$value>";
-                break;
+          String key = "header";
+          if (currentAttributeMap.containsKey(key)) {
+            var value = currentAttributeMap[key];
+            currentText = "<h$value>$blockString</h$value>";
+          }
 
-              case "align":
-                currentText = "<p style='text-align:$value'>$blockString</p>";
-                break;
+          key = "align";
+          if (currentAttributeMap.containsKey(key)) {
+            var value = currentAttributeMap[key];
+            currentText = "<p style='text-align:$value'>$blockString</p>";
+          }
 
-              case "direction":
-                currentText = "<p style='direction:$value'>$blockString</p>";
-                break;
+          key = "direction";
+          if (currentAttributeMap.containsKey(key)) {
+            var value = currentAttributeMap[key];
+            currentText = "<p style='direction:$value'>$blockString</p>";
+          }
 
-              case "code-block":
-                currentText =
-                "<pre><code style='color:#3F51B5; background-color:#f1f1f1; padding: 0px 4px;'>$blockString</code></pre>";
-                break;
+          key = "code-block";
+          if (currentAttributeMap.containsKey(key)) {
+            currentText =
+            "<pre><code style='color:#3F51B5; background-color:#f1f1f1; padding: 0px 4px;'>$blockString</code></pre>";
+          }
 
-              case "blockquote":
-                currentText = "<blockquote>$blockString</blockquote>";
-                break;
+          key = "blockquote";
+          if (currentAttributeMap.containsKey(key)) {
+            currentText = "<blockquote>$blockString</blockquote>";
+          }
 
-              case "indent":
-                currentText = "<p>${'&emsp;' * value} $blockString</p>";
-                break;
+          key = "list";
+          if (currentAttributeMap.containsKey(key)) {
+            var value = currentAttributeMap[key];
 
-              case "list":
+            currentText = '';
+
+            int indexPreText = blockString.lastIndexOf('\n');
+            String preText = "";
+            if (indexPreText != -1) {
+              preText = blockString.substring(0, indexPreText + 1);
+              blockString = blockString.substring(indexPreText + 1);
+            }
+
+            if (value == "checked") {
+              currentText +=
+              "<input type='checkbox' checked><label>$blockString</label><br>";
+            } else if (value == "unchecked") {
+              currentText +=
+              "<input type='checkbox' ><label>$blockString</label><br>";
+            } else {
+              if (listActivated) {
+                currentText += "<li>$blockString</li>";
+              } else {
+                listActivated = true;
                 switch (value) {
                   case "ordered":
-                    currentText = "<ol><li>$blockString</li></ol>";
+                    if (listClosing != "</ol>") {
+                      currentText += listClosing;
+                      listClosing = "";
+                    }
+                    currentText += "<ol><li>$blockString</li>";
+                    listClosing = "</ol>";
                     break;
                   case "bullet":
-                    currentText = "<ul><li>$blockString</li></ul>";
-                    break;
-                  case "checked":
-                    currentText =
-                    "<input type='checkbox' checked><label>$blockString</label><br>";
-                    break;
-                  case "unchecked":
-                    currentText =
-                    "<input type='checkbox' ><label>$blockString</label><br>";
+                    if (listClosing != "</ul>") {
+                      currentText += listClosing;
+                      listClosing = "";
+                    }
+                    currentText += "<ul><li>$blockString</li>";
+                    listClosing = "</ul>";
                     break;
                 }
-                break;
+              }
             }
-          });
+
+            currentText = "$preText$currentText";
+          }
+
+          key = "indent";
+          if (currentAttributeMap.containsKey(key)) {
+            var value = currentAttributeMap[key];
+            currentText = "${'&emsp;' * value * 2} $blockString</br>";
+            if (!listActivated) {
+              currentText = "<br>$currentText";
+            }
+          }
+
           html.write('$currentText\\Þ');
         }
       }

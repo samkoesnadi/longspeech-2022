@@ -10,7 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sicantik/utils.dart';
 
-const _codec = Codec.defaultCodec;
+const audioCodec = Codec.amrWB;
 const _channel = 1;
 const _bitRate = 256000;
 const _samplingRate = 48000;
@@ -22,11 +22,16 @@ class RecordSoundRecorder {
   StreamSubscription? _recorderSubscription;
 
   void recorderSubscriptionCallback(RecordingDisposition elem) {
-    var date = DateTime.fromMillisecondsSinceEpoch(elem.duration.inMilliseconds,
+    DateTime date = DateTime.fromMillisecondsSinceEpoch(elem.duration.inMilliseconds,
         isUtc: true);
-    var txt = DateFormat('mm:ss:SS', 'en_GB').format(date);
-    _recorderTxt.value = txt.substring(0, 8);
+    _recorderTxt.value = DateFormat('HH:mm:ss', 'en_GB').format(date);
     _dbLevel.value = elem.decibels ?? 0;
+
+    // max a day of recording
+    if (date.hour >= 23 && date.minute >= 59) {
+      stopRecorder();
+      cancelRecorderSubscriptions();
+    }
   }
 
   FlutterSoundRecorder recorderModule = FlutterSoundRecorder();
@@ -88,15 +93,12 @@ class RecordSoundRecorder {
         throw RecordingPermissionException('Microphone permission not granted');
       }
 
-      filePath = "$filePath${ext[_codec.index]}";
-
       await recorderModule.startRecorder(
-        toFile: filePath,
-        codec: _codec,
-        sampleRate: _samplingRate,
-        numChannels: _channel,
-        bitRate: _bitRate
-      );
+          toFile: filePath,
+          codec: audioCodec,
+          sampleRate: _samplingRate,
+          numChannels: _channel,
+          bitRate: _bitRate);
 
       recorderModule.logger.d('startRecorder');
 
@@ -175,11 +177,9 @@ class PlayerSoundRecorder {
       sliderCurrentPosition.value = 0.0;
     }
 
-    var date = DateTime.fromMillisecondsSinceEpoch(
-        elem.position.inMilliseconds,
+    var date = DateTime.fromMillisecondsSinceEpoch(elem.position.inMilliseconds,
         isUtc: true);
-    var txt = DateFormat('mm:ss:SS', 'en_GB').format(date);
-    _playerTxt.value = txt.substring(0, 8);
+    _playerTxt.value = DateFormat('HH:mm:ss', 'en_GB').format(date);
   }
 
   FlutterSoundPlayer playerModule = FlutterSoundPlayer();
@@ -230,9 +230,7 @@ class PlayerSoundRecorder {
 
   Future<void> startPlayer(String filePath) async {
     try {
-      filePath = "$filePath${ext[_codec.index]}";
-
-      var codec = _codec;
+      var codec = audioCodec;
       if (playerModule.isPaused) {
         await playerModule.resumePlayer();
       }
@@ -280,7 +278,7 @@ class PlayerSoundRecorder {
         return Container(
             margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
             decoration: const BoxDecoration(
-              color: Colors.white70,
+              color: Colors.white,
               borderRadius: BorderRadius.all(Radius.circular(16.0)),
               boxShadow: <BoxShadow>[
                 BoxShadow(
@@ -298,10 +296,12 @@ class PlayerSoundRecorder {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    Text(
-                      _playerTxt.value,
-                      style: TextStyle(fontSize: 16),
-                    ),
+                    Padding(
+                        padding: EdgeInsets.only(left: 8),
+                        child: Text(
+                          _playerTxt.value,
+                          style: TextStyle(fontSize: 16),
+                        )),
                     IconButton(
                         padding: EdgeInsets.only(left: 8),
                         onPressed: () => startPlayer(filePath),
@@ -310,11 +310,6 @@ class PlayerSoundRecorder {
                         padding: EdgeInsets.only(left: 8),
                         onPressed: pausePlayer,
                         icon: Icon(Icons.pause)),
-                    IconButton(
-                      padding: EdgeInsets.only(left: 8),
-                      onPressed: stopPlayer,
-                      icon: Icon(Icons.stop),
-                    ),
                     Expanded(
                         child: Slider(
                             value: min(

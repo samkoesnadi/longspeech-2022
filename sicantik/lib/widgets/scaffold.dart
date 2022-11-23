@@ -57,8 +57,7 @@ class _MyScaffold extends State<MyScaffold> {
       floatingActionButton = SpeedDial(
         key: widget.floatingActionButtonKey,
         // iconTheme: IconThemeData(size: 40),
-        backgroundColor: Colors.white60,
-        foregroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Colors.white,
         children: widget.speedDialChildren,
         onPress: widget.speedDialOnPress,
         icon: widget.floatingActionButtonIcon,

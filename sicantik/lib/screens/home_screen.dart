@@ -115,8 +115,7 @@ class HomeScreenState extends State<HomeScreen> {
           boxStorage.write("fullVersion", true);
         }
         if (purchaseDetails.pendingCompletePurchase) {
-          await InAppPurchase.instance
-              .completePurchase(purchaseDetails);
+          await InAppPurchase.instance.completePurchase(purchaseDetails);
         }
       }
     });
@@ -156,7 +155,7 @@ class HomeScreenState extends State<HomeScreen> {
     Map<String, dynamic> note = noteStorage.read(noteId);
     List<Widget> trailing = [];
     trailing.add(StarButton(
-        iconColor: Theme.of(context).primaryColor,
+        iconColor: Colors.yellow,
         valueChanged: (isStarred) async {
           await saveStarred(isStarred, noteId);
         },
@@ -193,7 +192,9 @@ class HomeScreenState extends State<HomeScreen> {
               arguments: {"noteId": noteId});
         },
         trailing: trailing,
-        editedAt: dateFormat.format(DateTime.parse(note["editedAt"])));
+        editedAt: dateFormat.format(DateTime.parse(note["editedAt"])),
+        category: note["category"] ?? "none"
+    );
   }
 
   GlobalKey buttonKey = GlobalKey();
@@ -255,35 +256,57 @@ class HomeScreenState extends State<HomeScreen> {
 
           // check fullVersion, if yes continue
           bool allowAddNote = true;
-          if ((noteStorage.read("noteIds") ?? []).length >= fullVersionNoteAmount) {
+          if ((noteStorage.read("noteIds") ?? []).length >=
+              fullVersionNoteAmount) {
             allowAddNote = boxStorage.read("fullVersion") ?? false;
           }
 
           if (allowAddNote) {
             await Get.to(() => const NewNoteScreen());
           } else {
-            await Fluttertoast.showToast(msg: "Thank you for using the app so far. Please purchase here for more than $fullVersionNoteAmount notes...");
+            await Alert(
+                context: context,
+                style: const AlertStyle(isOverlayTapDismiss: false),
+                title: "Thank you for using the app so far!",
+                desc: "You can get the full app for more than $fullVersionNoteAmount notes. It is affordable 😊",
+                buttons: [
+                  DialogButton(
+                      child: Text("Check it out",
+                          style: TextStyle(
+                              color: Theme.of(context)
+                                  .primaryTextTheme
+                                  .headline1
+                                  ?.color)),
+                      onPressed: () => Get.back())
+                ]).show();
 
             bool available = await InAppPurchase.instance.isAvailable();
             if (available) {
               // Sell full version
-              const Set<String> kIds = <String>{'fullVersion'};  // keep it just one
+              const Set<String> kIds = <String>{
+                'fullversion'
+              }; // keep it just one
               final ProductDetailsResponse response =
-              await InAppPurchase.instance.queryProductDetails(kIds);
+                  await InAppPurchase.instance.queryProductDetails(kIds);
               if (response.notFoundIDs.isNotEmpty) {
                 // Handle the error.
-                await Fluttertoast.showToast(msg: "Expressive app cannot find the item on Play Store");
+                await Fluttertoast.showToast(
+                    msg: "Expressive app cannot find the item on Play Store");
                 return;
               }
               List<ProductDetails> products = response.productDetails;
               ProductDetails fullVersion = products[0];
 
-              final PurchaseParam purchaseParam = PurchaseParam(productDetails: fullVersion);
-              await InAppPurchase.instance.buyNonConsumable(purchaseParam: purchaseParam);
+              final PurchaseParam purchaseParam =
+                  PurchaseParam(productDetails: fullVersion);
+              await InAppPurchase.instance
+                  .buyNonConsumable(purchaseParam: purchaseParam);
               // From here the purchase flow will be handled by the underlying store.
               // Updates will be delivered to the `InAppPurchase.instance.purchaseStream`.
             } else {
-              await Fluttertoast.showToast(msg: "The Play Store cannot be accessed right now. No internet connection?");
+              await Fluttertoast.showToast(
+                  msg:
+                      "The Play Store cannot be accessed right now. No internet connection?");
             }
           }
         },

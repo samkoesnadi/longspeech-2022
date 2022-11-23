@@ -27,6 +27,7 @@ Map<String, dynamic> summarize(
   Map<String, double> wordProbability = hybridTfIdfProbability(tokenOut);
 
   List keywordsCandidates = [];
+
   wordProbability.forEach((key, value) {
     if (!commonEnglishWords.contains(key)) {
       keywordsCandidates.add([key, value]);
@@ -137,5 +138,15 @@ List<String> splitIntoSentences(String text, {int minLength = 5}) {
       .toList();
   sentences
       .removeWhere((element) => element == "" || element.length < minLength);
+  sentences = sentences.map((e) {
+    if (e.length >= 2) {
+      if (allPossibleSymbols.contains(e[e.length - 2])) {
+        return e.substring(0, e.length - 1);
+      }
+    }
+
+    return e;
+  }).toList();
+
   return sentences;
 }

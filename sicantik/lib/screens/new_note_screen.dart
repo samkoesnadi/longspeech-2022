@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_quill/flutter_quill.dart' hide Text;
 import 'package:flutter_quill_extensions/embeds/widgets/image.dart';
+import 'package:flutter_sound/public/tau.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -35,7 +36,8 @@ class NewNoteScreen extends StatefulWidget {
   State<NewNoteScreen> createState() => _NewNoteScreenState();
 }
 
-class _NewNoteScreenState extends State<NewNoteScreen> {
+class _NewNoteScreenState extends State<NewNoteScreen>
+    with WidgetsBindingObserver {
   late QuillController _quillController;
   late TextEditingController _titleController;
   late MyQuillEditor myQuillEditor;
@@ -44,6 +46,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
   late String noteId;
   late List<String> allStarred;
   late bool isStarred;
+  String noteCategory = "none";
 
   // keep track of resources to remove because quill does not do that
   late Map<String, dynamic> imageClassifications;
@@ -67,7 +70,11 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
         noteId = arguments["noteId"];
         final noteJson = noteStorage.read("$noteId-full");
         doc = Document.fromJson(jsonDecode(noteJson));
-        title = noteStorage.read(noteId)["title"];
+        final note = noteStorage.read(noteId) ?? {};
+        title = note["title"];
+        if (note.containsKey("category")) {
+          noteCategory = note["category"];
+        }
       }
     } else {
       noteId = const Uuid().v4();
@@ -87,6 +94,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
     voiceRecordings =
         noteStorage.read("$noteId-voiceRecordings")?.cast<String>() ?? [];
     videos = noteStorage.read("$noteId-videos")?.cast<String>() ?? [];
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   GlobalKey appBarKey = GlobalKey();
@@ -99,19 +108,42 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
               context: context,
               style: const AlertStyle(isOverlayTapDismiss: false),
               title: "What should we do with this document?",
+              content: Flex(
+                mainAxisAlignment: MainAxisAlignment.center,
+                direction: Axis.horizontal,
+                children: [
+                  Text("Note category is ", style: TextStyle(fontSize: 14)),
+                  StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                    return DropdownButton<String>(
+                      onChanged: (selectedVal) {
+                        setState(() {
+                          noteCategory = selectedVal ?? "none";
+                        });
+                      },
+                      value: noteCategory,
+                      items: noteCategories.keys
+                          .map(
+                            (category) => DropdownMenuItem(
+                              value: category,
+                              child: Text(category,
+                                  overflow: TextOverflow.ellipsis),
+                            ),
+                          )
+                          .toList(),
+                    );
+                  })
+                ],
+              ),
               buttons: [
                 DialogButton(
                     color: Colors.grey,
                     child:
-                        Text("Cancel", style: TextStyle(color: Colors.white)),
+                        Text("Cancel", style: TextStyle(color: Colors.white70)),
                     onPressed: () => Get.back()),
                 DialogButton(
-                    child: Text("Discard",
-                        style: TextStyle(
-                            color: Theme.of(context)
-                                .primaryTextTheme
-                                .headline1
-                                ?.color)),
+                    child:
+                        Text("Discard", style: TextStyle(color: Colors.black)),
                     onPressed: () async {
                       Get.back();
                       await manageResources(_quillController.document,
@@ -124,12 +156,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                       }
                     }),
                 DialogButton(
-                    child: Text("Save",
-                        style: TextStyle(
-                            color: Theme.of(context)
-                                .primaryTextTheme
-                                .headline1
-                                ?.color)),
+                    child: Text("Save", style: TextStyle(color: Colors.black)),
                     onPressed: () async {
                       Get.back();
                       context.loaderOverlay.show();
@@ -140,7 +167,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                           isStarred,
                           imageClassifications,
                           voiceRecordings,
-                          videos);
+                          videos,
+                          noteCategory);
                       Fluttertoast.cancel();
                       await Fluttertoast.showToast(
                           msg: "The document is saved");
@@ -183,7 +211,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                 ])),
             title: Container(
                 alignment: Alignment.centerLeft,
-                color: Colors.white70,
+                color: Colors.white,
                 padding: const EdgeInsets.only(left: 5, right: 5),
                 child: TextField(
                   controller: _titleController,
@@ -193,7 +221,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
             appBarActions: [
               StarButton(
                   isStarred: allStarred.contains(noteId),
-                  iconColor: Colors.white,
+                  iconColor: Colors.yellow,
                   valueChanged: (_isStarred) {
                     isStarred = _isStarred;
                   }),
@@ -206,7 +234,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                         isStarred,
                         imageClassifications,
                         voiceRecordings,
-                        videos);
+                        videos,
+                        noteCategory);
 
                     Fluttertoast.cancel();
                     await Fluttertoast.showToast(msg: "The document is saved");
@@ -216,8 +245,27 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.inactive) {
+      await saveDocument(
+          noteId,
+          _titleController.text,
+          _quillController.document,
+          isStarred,
+          imageClassifications,
+          voiceRecordings,
+          videos,
+          noteCategory);
+
+      Fluttertoast.cancel();
+      await Fluttertoast.showToast(msg: "The document is saved");
+    }
+  }
+
+  @override
   void dispose() {
     globalAudioPlayers = {};
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -229,9 +277,8 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
     final appDocDir = await getApplicationDocumentsDirectory();
     String targetPath = '${appDocDir.path}/${basename(file.path)}';
     File? copiedFile = await FlutterImageCompress.compressAndGetFile(
-      file.absolute.path, targetPath,
-      keepExif: true
-    );
+        file.absolute.path, targetPath,
+        keepExif: true);
     copiedFile ??= file.copySync(targetPath);
 
     // Process image labeling
@@ -239,22 +286,39 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
 
     String toastText = 'Detected labels:';
     List<String> detectedObjects = [];
-    if (labels.length == 0) {
-      toastText += "none";
-    } else {
-      for (final label in labels) {
-        if (label.confidence > 0.1) {
-          toastText += '\n- ${label.label}, '
-              'confidence: ${label.confidence.toStringAsFixed(2)}';
-          detectedObjects.add(label.label);
-        }
-      }
-    }
+    await Alert(
+        context: this.context,
+        title: "Detect objects in the image?",
+        buttons: [
+          DialogButton(
+              color: Colors.grey,
+              child: Text("No", style: TextStyle(color: Colors.white)),
+              onPressed: () => Get.back()),
+          DialogButton(
+              child: const Text("OK"),
+              onPressed: () async {
+                if (labels.length == 0) {
+                  toastText += "none";
+                } else {
+                  for (final label in labels) {
+                    if (label.confidence > 0.1) {
+                      toastText += '\n- ${label.label}, '
+                          'confidence: ${label.confidence.toStringAsFixed(2)}';
+                      detectedObjects.add(label.label);
+                    }
+                  }
+                }
+                Get.back();
+              })
+        ]).show();
     String localPath = copiedFile.path.toString();
 
     imageClassifications[standardizeImageUrl(localPath)] = detectedObjects;
-    await Fluttertoast.showToast(
-        msg: toastText, toastLength: Toast.LENGTH_LONG);
+
+    if (detectedObjects.isNotEmpty) {
+      await Fluttertoast.showToast(
+          msg: toastText, toastLength: Toast.LENGTH_LONG);
+    }
 
     return localPath;
   }
@@ -343,7 +407,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
                       case "RecordAudio":
                         var tempDir = await getTemporaryDirectory();
                         String audioFilePath =
-                            '${tempDir.path}/sound_${uuid.v4()}';
+                            '${tempDir.path}/sound_${uuid.v4()}${ext[audioCodec.index]}';
 
                         // 1. Record the audio
                         await recordSoundRecorder.startRecorder(audioFilePath);
@@ -504,8 +568,7 @@ class _NewNoteScreenState extends State<NewNoteScreen> {
 
                           // 2. Store detected
                           imageClassifications[standardizeImageUrl(filePath)] =
-                              GetStorage().read("detectedWord_temp") ??
-                                  ["none"];
+                              GetStorage().read("detectedWord_temp") ?? [];
 
                           // 3. Show the image
                           final controller = _quillController;

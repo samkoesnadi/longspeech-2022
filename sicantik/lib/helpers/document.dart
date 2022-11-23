@@ -36,7 +36,8 @@ Future<void> saveDocument(
     bool isStarred,
     Map<String, dynamic> imageClassifications,
     List<String> voiceRecordings,
-    List<String> videos) async {
+    List<String> videos,
+    String noteCategory) async {
   final noteStorage = GetStorage("notes");
 
   // Update full text
@@ -56,6 +57,7 @@ Future<void> saveDocument(
   Map<String, dynamic> noteMetadata = noteStorage.read(noteId) ?? {};
   noteMetadata["title"] = title;
   noteMetadata["editedAt"] = DateTime.now().toString();
+  noteMetadata["category"] = noteCategory;
   noteMetadata["summarized"] = aiAnalysisResult["summarized"];
   noteMetadata["wordCount"] = aiAnalysisResult["wordCount"];
 
@@ -257,7 +259,6 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
 
 Future<File> exportToPDF(List json, String dirPath, String fileName) async {
   for (Map<String, dynamic> elem in json) {
-    print(elem);
     if (elem["insert"] is Map<String, dynamic>) {
       if (elem["insert"].containsKey("image")) {
         // elem["insert"]["image"] = elem["insert"]["image"].toString() +

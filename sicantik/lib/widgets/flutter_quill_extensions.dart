@@ -120,11 +120,11 @@ class MyImageEmbedBuilder implements EmbedBuilder {
     if (imageArguments != null) {
       if (imageArguments!.containsKey(imageUrl)) {
         detectedObjects = imageArguments![imageUrl]!.cast<String>();
-        showDetectedObjects = true;
       }
     }
-    if (detectedObjects.isEmpty) {
-      detectedObjects = ["none"];
+
+    if (detectedObjects.isNotEmpty) {
+      showDetectedObjects = true;
     }
 
     Tuple2<double?, double?>? _widthHeight;

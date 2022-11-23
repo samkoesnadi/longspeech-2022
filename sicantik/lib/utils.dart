@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:english_words/english_words.dart' as ew;
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
@@ -35,6 +36,15 @@ List<String> newNotePlaceholderOptions = [
       "Good luck in what you are doing right now 💪"
 ];
 
+Map<String, Color> noteCategories = {
+  "none": Colors.white,
+  "diary": Colors.lightBlueAccent,
+  "presentation": Colors.lightGreenAccent,
+  "work": Colors.redAccent,
+  "lecture": Colors.limeAccent,
+  "buy-list": Colors.orangeAccent
+};
+
 class CardData {
   String title;
   String description;
@@ -44,6 +54,7 @@ class CardData {
   List<Widget>? trailing;
   String? editedAt;
   Widget? child;
+  String? category;
 
   CardData(
       {required this.title,
@@ -53,7 +64,8 @@ class CardData {
       this.noteId,
       this.trailing,
       this.editedAt,
-      this.child});
+      this.child,
+      this.category});
 }
 
 class Reminder {

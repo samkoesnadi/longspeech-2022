@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:sicantik/utils.dart';
 
@@ -30,9 +31,10 @@ BoxScrollView generateListView(
       itemBuilder: (BuildContext context, int index) {
         String headline = cardData[index].title;
         String description = cardData[index].description;
+        String category = cardData[index].category ?? "none";
 
-        const summarizedMaxLength = 600;
-        const titleMaxLength = 1000;
+        const summarizedMaxLength = 150;
+        const titleMaxLength = 100;
 
         if (description.length > summarizedMaxLength) {
           description = "${description.substring(0, summarizedMaxLength)}...";
@@ -50,6 +52,13 @@ BoxScrollView generateListView(
                 mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.end,
             ));
+
+        String bottomCardText = cardData[index].editedAt!.toString();
+
+        if (category != "none") {
+          bottomCardText = '${category.capitalizeFirst!} : $bottomCardText';
+        }
+
         return _wrapScrollTag(
             index: index,
             noteId: cardData[index].noteId ?? '',
@@ -58,8 +67,8 @@ BoxScrollView generateListView(
                 child: Container(
                   margin: const EdgeInsets.symmetric(
                       vertical: 8.0, horizontal: 4.0),
-                  decoration: const BoxDecoration(
-                    color: Colors.white70,
+                  decoration: BoxDecoration(
+                    color: noteCategories[category],
                     borderRadius: BorderRadius.all(Radius.circular(16.0)),
                     boxShadow: <BoxShadow>[
                       BoxShadow(
@@ -86,8 +95,8 @@ BoxScrollView generateListView(
                                     textAlign: TextAlign.center,
                                   )),
                               Align(
-                                  alignment: Alignment.bottomCenter,
-                                  child: Text(cardData[index].editedAt!))
+                                  alignment: Alignment.topCenter,
+                                  child: Text(bottomCardText))
                             ],
                           ))),
                 )),

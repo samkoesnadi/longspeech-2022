@@ -66,9 +66,11 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
         noteStorage.read("$noteId-reminders")?.cast<int>() ?? [];
     reminders.clear();
     for (int reminderId in reminderIds) {
-      String datetimeStr = reminderStorage.read(reminderId.toString())!;
-      DateTime datetime = DateTime.parse(datetimeStr);
-      reminders.add(Reminder(id: reminderId, datetime: datetime));
+      if (reminderStorage.hasData(reminderId.toString())) {
+        String datetimeStr = reminderStorage.read(reminderId.toString());
+        DateTime datetime = DateTime.parse(datetimeStr);
+        reminders.add(Reminder(id: reminderId, datetime: datetime));
+      }
     }
   }
 
@@ -108,6 +110,9 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
         title: "Edited at",
         description:
             dateFormat.format(DateTime.parse(noteMetadata['editedAt']))));
+    aiAnalysisCardData.add(CardData(
+        title: "Category",
+        description: noteMetadata["category"] ?? "none"));
     aiAnalysisCardData.add(
         CardData(title: "Summary", description: noteMetadata["summarized"]));
 
@@ -164,6 +169,7 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
           },
           appBarKey: appBarGlobalKey,
           appBarBottom: TabBar(
+              indicatorColor: noteCategories[noteMetadata["category"] ?? "none"],
               key: tabBarGlobalKey,
               controller: _tabController,
               tabs: [
@@ -271,8 +277,8 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
                                   final item = reminders[index];
 
                                   return ItemTags(
-                                      textColor: Colors.white,
-                                      color: Colors.blueGrey,
+                                      textColor: Colors.black,
+                                      color: Colors.white,
                                       index: index,
                                       title: dateFormat.format(item.datetime),
                                       removeButton: ItemTagsRemoveButton(
