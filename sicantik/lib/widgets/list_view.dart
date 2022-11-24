@@ -68,7 +68,7 @@ BoxScrollView generateListView(
                   margin: const EdgeInsets.symmetric(
                       vertical: 8.0, horizontal: 4.0),
                   decoration: BoxDecoration(
-                    color: noteCategories[category],
+                    color: Colors.white,
                     borderRadius: BorderRadius.all(Radius.circular(16.0)),
                     boxShadow: <BoxShadow>[
                       BoxShadow(
