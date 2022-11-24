@@ -14,6 +14,7 @@ var logger = Logger(
 );
 
 int fullVersionNoteAmount = 5;
+const fullVersionProductId = "fullversion";
 DateFormat dateFormat = DateFormat("EEEE, yyyy-MM-dd HH:mm");
 const allPossibleSymbols = "!'§<>|\$%&/()=?\\`´+*#öäüÜÖÄ,.-;:_^{}[]";
 var commonEnglishWords = ew.all +

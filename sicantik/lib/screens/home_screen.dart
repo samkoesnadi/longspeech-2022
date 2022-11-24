@@ -112,7 +112,9 @@ class HomeScreenState extends State<HomeScreen> {
           // } else {
           //   // _handleInvalidPurchase(purchaseDetails);
           // // }
-          boxStorage.write("fullVersion", true);
+          if (purchaseDetails.productID == fullVersionProductId) {
+            boxStorage.write(fullVersionProductId, true);
+          }
         }
         if (purchaseDetails.pendingCompletePurchase) {
           await InAppPurchase.instance.completePurchase(purchaseDetails);
@@ -178,8 +180,7 @@ class HomeScreenState extends State<HomeScreen> {
                 })
           ]).show();
         },
-        icon:
-            Icon(Icons.delete_outline)));
+        icon: Icon(Icons.delete_outline)));
     String summarized = note["summarized"];
     String title = note["title"];
 
@@ -193,8 +194,7 @@ class HomeScreenState extends State<HomeScreen> {
         },
         trailing: trailing,
         editedAt: dateFormat.format(DateTime.parse(note["editedAt"])),
-        category: note["category"] ?? "none"
-    );
+        category: note["category"] ?? "none");
   }
 
   GlobalKey buttonKey = GlobalKey();
@@ -258,7 +258,7 @@ class HomeScreenState extends State<HomeScreen> {
           bool allowAddNote = true;
           if ((noteStorage.read("noteIds") ?? []).length >=
               fullVersionNoteAmount) {
-            allowAddNote = boxStorage.read("fullVersion") ?? false;
+            allowAddNote = boxStorage.read(fullVersionProductId) ?? false;
           }
 
           if (allowAddNote) {
@@ -268,7 +268,8 @@ class HomeScreenState extends State<HomeScreen> {
                 context: context,
                 style: const AlertStyle(isOverlayTapDismiss: false),
                 title: "Thank you for using the app so far!",
-                desc: "You can get the full app for more than $fullVersionNoteAmount notes. It is affordable 😊",
+                desc:
+                    "You can get the full app for more than $fullVersionNoteAmount notes. It is affordable 😊",
                 buttons: [
                   DialogButton(
                       child: Text("Check it out",
@@ -282,27 +283,34 @@ class HomeScreenState extends State<HomeScreen> {
 
             bool available = await InAppPurchase.instance.isAvailable();
             if (available) {
+              // restore purchases from before
+              await InAppPurchase.instance.restorePurchases();
+
               // Sell full version
               const Set<String> kIds = <String>{
-                'fullversion'
+                fullVersionProductId
               }; // keep it just one
               final ProductDetailsResponse response =
                   await InAppPurchase.instance.queryProductDetails(kIds);
               if (response.notFoundIDs.isNotEmpty) {
                 // Handle the error.
                 await Fluttertoast.showToast(
-                    msg: "Expressive app cannot find the item on Play Store");
+                    msg:
+                        "Expressive Note app cannot find the item on Play Store");
                 return;
               }
               List<ProductDetails> products = response.productDetails;
-              ProductDetails fullVersion = products[0];
 
-              final PurchaseParam purchaseParam =
-                  PurchaseParam(productDetails: fullVersion);
-              await InAppPurchase.instance
-                  .buyNonConsumable(purchaseParam: purchaseParam);
-              // From here the purchase flow will be handled by the underlying store.
-              // Updates will be delivered to the `InAppPurchase.instance.purchaseStream`.
+              for (ProductDetails product in products) {
+                if (product.id == fullVersionProductId) {
+                  final PurchaseParam purchaseParam =
+                      PurchaseParam(productDetails: product);
+                  await InAppPurchase.instance
+                      .buyNonConsumable(purchaseParam: purchaseParam);
+                  // From here the purchase flow will be handled by the underlying store.
+                  // Updates will be delivered to the `InAppPurchase.instance.purchaseStream`.
+                }
+              }
             } else {
               await Fluttertoast.showToast(
                   msg:

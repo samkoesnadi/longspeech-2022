@@ -5,7 +5,7 @@ class Messages extends Translations {
   @override
   Map<String, Map<String, String>> get keys => {
         'en_US': {
-          'title': 'Expressive',
+          'title': 'Expressive Note',
           "untitled": "Untitled",
           "viewNote": "View",
           "AINote": "AI-assist"
