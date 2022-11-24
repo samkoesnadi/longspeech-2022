@@ -13,6 +13,7 @@ import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:sicantik/helpers/document.dart';
 import 'package:sicantik/screens/new_note_screen.dart';
 import 'package:sicantik/screens/view_note_screen.dart';
+import 'package:sicantik/theme_data.dart';
 import 'package:sicantik/utils.dart';
 import 'package:sicantik/widgets/bubble_showcase.dart';
 import 'package:sicantik/widgets/list_view.dart';
@@ -95,6 +96,9 @@ class HomeScreenState extends State<HomeScreen> {
     }, onError: (error) {
       // handle error here.
     });
+
+    // restore purchases from before
+    InAppPurchase.instance.restorePurchases();
   }
 
   void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
@@ -165,7 +169,7 @@ class HomeScreenState extends State<HomeScreen> {
     trailing.add(IconButton(
         onPressed: () async {
           Alert(context: context, title: "Are you sure?", buttons: [
-            DialogButton(
+            DialogButton(color:grey.shade50, 
                 child: Text(
                   "Yes",
                   style: TextStyle(
@@ -271,7 +275,7 @@ class HomeScreenState extends State<HomeScreen> {
                 desc:
                     "You can get the full app for more than $fullVersionNoteAmount notes. It is affordable 😊",
                 buttons: [
-                  DialogButton(
+                  DialogButton(color:grey.shade50,
                       child: Text("Check it out",
                           style: TextStyle(
                               color: Theme.of(context)
@@ -283,9 +287,6 @@ class HomeScreenState extends State<HomeScreen> {
 
             bool available = await InAppPurchase.instance.isAvailable();
             if (available) {
-              // restore purchases from before
-              await InAppPurchase.instance.restorePurchases();
-
               // Sell full version
               const Set<String> kIds = <String>{
                 fullVersionProductId
@@ -305,6 +306,7 @@ class HomeScreenState extends State<HomeScreen> {
                 if (product.id == fullVersionProductId) {
                   final PurchaseParam purchaseParam =
                       PurchaseParam(productDetails: product);
+
                   await InAppPurchase.instance
                       .buyNonConsumable(purchaseParam: purchaseParam);
                   // From here the purchase flow will be handled by the underlying store.

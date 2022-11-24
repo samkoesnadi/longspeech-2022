@@ -9,6 +9,7 @@ import 'package:google_mlkit_digital_ink_recognition/google_mlkit_digital_ink_re
 import 'package:loader_overlay/loader_overlay.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:sicantik/internationalization.dart';
+import 'package:sicantik/theme_data.dart';
 import 'package:sicantik/utils.dart';
 
 class DigitalInkView extends StatefulWidget {
@@ -86,12 +87,13 @@ class _DigitalInkViewState extends State<DigitalInkView> {
                 ],
               ),
               buttons: [
-                DialogButton(
-                    color: Colors.grey,
+                DialogButton(color:grey.shade50, 
                     child:
-                    Text("No AI", style: TextStyle(color: Colors.white70)),
+                    Text("No AI", style: TextStyle(
+                        color:
+                        Theme.of(context).primaryTextTheme.headline1?.color)),
                     onPressed: () => Get.back()),
-                DialogButton(
+                DialogButton(color:grey.shade50, 
                     child: const Text("Continue"),
                     onPressed: () async {
                       context.loaderOverlay.show();

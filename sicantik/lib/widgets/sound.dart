@@ -10,9 +10,9 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sicantik/utils.dart';
 
-const audioCodec = Codec.amrWB;
+const audioCodec = Codec.aacMP4;
 const _channel = 1;
-const _bitRate = 256000;
+const _bitRate = 320000;
 const _samplingRate = 48000;
 
 class RecordSoundRecorder {
@@ -312,6 +312,8 @@ class PlayerSoundRecorder {
                         icon: Icon(Icons.pause)),
                     Expanded(
                         child: Slider(
+                            activeColor: Colors.black,
+                            inactiveColor: Colors.grey,
                             value: min(
                                 sliderCurrentPosition.value, maxDuration.value),
                             min: 0.0,

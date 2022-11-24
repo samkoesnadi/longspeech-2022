@@ -19,6 +19,7 @@ import 'package:sicantik/helpers/document.dart';
 import 'package:sicantik/helpers/image_labeler.dart';
 import 'package:sicantik/helpers/speech_to_text.dart';
 import 'package:sicantik/screens/view_note_screen.dart';
+import 'package:sicantik/theme_data.dart';
 import 'package:sicantik/utils.dart';
 import 'package:sicantik/widgets/bubble_showcase.dart';
 import 'package:sicantik/widgets/digital_ink.dart';
@@ -47,6 +48,7 @@ class _NewNoteScreenState extends State<NewNoteScreen>
   late List<String> allStarred;
   late bool isStarred;
   String noteCategory = "none";
+  bool newDocument = true;
 
   // keep track of resources to remove because quill does not do that
   late Map<String, dynamic> imageClassifications;
@@ -75,6 +77,7 @@ class _NewNoteScreenState extends State<NewNoteScreen>
         if (note.containsKey("category")) {
           noteCategory = note["category"];
         }
+        newDocument = false;
       }
     } else {
       noteId = const Uuid().v4();
@@ -137,11 +140,16 @@ class _NewNoteScreenState extends State<NewNoteScreen>
               ),
               buttons: [
                 DialogButton(
-                    color: Colors.grey,
-                    child:
-                        Text("Cancel", style: TextStyle(color: Colors.white70)),
+                    color: grey.shade50,
+                    child: Text("Cancel",
+                        style: TextStyle(
+                            color: Theme.of(context)
+                                .primaryTextTheme
+                                .headline1
+                                ?.color)),
                     onPressed: () => Get.back()),
                 DialogButton(
+                    color: grey.shade50,
                     child:
                         Text("Discard", style: TextStyle(color: Colors.black)),
                     onPressed: () async {
@@ -156,6 +164,7 @@ class _NewNoteScreenState extends State<NewNoteScreen>
                       }
                     }),
                 DialogButton(
+                    color: grey.shade50,
                     child: Text("Save", style: TextStyle(color: Colors.black)),
                     onPressed: () async {
                       Get.back();
@@ -218,47 +227,57 @@ class _NewNoteScreenState extends State<NewNoteScreen>
                   decoration: const InputDecoration(border: InputBorder.none),
                 )),
             appBarKey: appBarKey,
-            appBarActions: [
-              StarButton(
-                  isStarred: allStarred.contains(noteId),
-                  iconColor: Colors.yellow,
-                  valueChanged: (_isStarred) {
-                    isStarred = _isStarred;
-                  }),
-              IconButton(
-                  onPressed: () async {
-                    await saveDocument(
-                        noteId,
-                        _titleController.text,
-                        _quillController.document,
-                        isStarred,
-                        imageClassifications,
-                        voiceRecordings,
-                        videos,
-                        noteCategory);
+            appBarActions: <Widget>[
+                  Padding(
+                      padding: EdgeInsets.only(right: (newDocument ? 16: 8)),
+                      child: StarButton(
+                          isStarred: allStarred.contains(noteId),
+                          iconColor: Colors.yellow,
+                          valueChanged: (_isStarred) {
+                            isStarred = _isStarred;
+                          })),
+                ] +
+                (newDocument
+                    ? []
+                    : [
+                        IconButton(
+                            padding: EdgeInsets.only(right: 8),
+                            onPressed: () async {
+                              await saveDocument(
+                                  noteId,
+                                  _titleController.text,
+                                  _quillController.document,
+                                  isStarred,
+                                  imageClassifications,
+                                  voiceRecordings,
+                                  videos,
+                                  noteCategory);
 
-                    Fluttertoast.cancel();
-                    await Fluttertoast.showToast(msg: "The document is saved");
-                  },
-                  icon: const Icon(Icons.save))
-            ]));
+                              Fluttertoast.cancel();
+                              await Fluttertoast.showToast(
+                                  msg: "The document is saved");
+                            },
+                            icon: const Icon(Icons.save))
+                      ])));
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.inactive) {
-      await saveDocument(
-          noteId,
-          _titleController.text,
-          _quillController.document,
-          isStarred,
-          imageClassifications,
-          voiceRecordings,
-          videos,
-          noteCategory);
+      if (!newDocument) {
+        await saveDocument(
+            noteId,
+            _titleController.text,
+            _quillController.document,
+            isStarred,
+            imageClassifications,
+            voiceRecordings,
+            videos,
+            noteCategory);
 
-      Fluttertoast.cancel();
-      await Fluttertoast.showToast(msg: "The document is saved");
+        Fluttertoast.cancel();
+        await Fluttertoast.showToast(msg: "The document is saved");
+      }
     }
   }
 
@@ -291,10 +310,11 @@ class _NewNoteScreenState extends State<NewNoteScreen>
         title: "Detect objects in the image?",
         buttons: [
           DialogButton(
-              color: Colors.grey,
-              child: Text("No", style: TextStyle(color: Colors.white)),
+              color: grey.shade50,
+              child: Text("No", style: TextStyle(color: grey.shade500)),
               onPressed: () => Get.back()),
           DialogButton(
+              color: grey.shade50,
               child: const Text("OK"),
               onPressed: () async {
                 if (labels.length == 0) {
@@ -423,6 +443,7 @@ class _NewNoteScreenState extends State<NewNoteScreen>
                                     recordSoundRecorder.getRecorderSection()),
                             buttons: [
                               DialogButton(
+                                  color: grey.shade50,
                                   child: Text("Stop"),
                                   onPressed: () {
                                     Get.back();
@@ -496,6 +517,7 @@ class _NewNoteScreenState extends State<NewNoteScreen>
                             ),
                             buttons: [
                               DialogButton(
+                                color: grey.shade50,
                                 child: const Text("OK"),
                                 onPressed: () async {
                                   Get.back();
@@ -511,6 +533,7 @@ class _NewNoteScreenState extends State<NewNoteScreen>
                                           Text(partialTextController.value)),
                                       buttons: [
                                         DialogButton(
+                                          color: grey.shade50,
                                           child: const Text("Stop"),
                                           onPressed: () {
                                             speechToTextHandler.stopListening();

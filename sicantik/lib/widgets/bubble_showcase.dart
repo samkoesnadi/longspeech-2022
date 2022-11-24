@@ -1,10 +1,11 @@
 import 'package:bubble_showcase/bubble_showcase.dart';
 import 'package:flutter/material.dart';
+import 'package:sicantik/theme_data.dart';
 import 'package:sicantik/widgets/speech_bubble.dart';
 
 const doNotReopenOnClose = true;
 int bubbleShowcaseVersion = 1;
-const bubbleColor = Colors.teal;
+Color bubbleColor = grey.shade500;
 const textColor = Colors.white;
 
 class BubbleShowcaseHomeScreenWidget extends StatelessWidget {
@@ -34,7 +35,7 @@ class BubbleShowcaseHomeScreenWidget extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(10),
                       child: Text(
-                          'My name is Samuel Matthew Koesnadi, the Expressive Note app author 👨‍🔧 Welcome to the app!\n\n'
+                          'My name is Samuel Matthew, the Expressive Note app author 👨‍🔧 Welcome to the app!\n\n'
                           'I am now going to give you a quick walk through the app 😄\n\n'
                           'We will learn how to use this App to allow your productivity and creativity to shine! And yes, your note will be analyzed by AI for key information 😉 It runs on your device, so all data of yours is kept safely in your device.\n\n\n'
                           'With love, Samuel.',
