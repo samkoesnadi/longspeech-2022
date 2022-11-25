@@ -299,18 +299,18 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
               )),
           title: Text(title),
           appBarActions: [
-            IconButton(
-                onPressed: () async {
-                  String? downloadDirectory = await getDownloadPath();
-                  context.loaderOverlay.show();
-                  File PDFPath = await exportToPdf(downloadDirectory!, title);
-                  context.loaderOverlay.hide();
-                  await Fluttertoast.showToast(
-                      msg:
-                          "PDF is stored in local storage's Download: ${basename(PDFPath.path)}",
-                      toastLength: Toast.LENGTH_LONG);
-                },
-                icon: Icon(Icons.download)),
+            // IconButton(
+            //     onPressed: () async {
+            //       String? downloadDirectory = await getDownloadPath();
+            //       context.loaderOverlay.show();
+            //       File PDFPath = await exportToPdf(downloadDirectory!, title);
+            //       context.loaderOverlay.hide();
+            //       await Fluttertoast.showToast(
+            //           msg:
+            //               "PDF is stored in local storage's Download: ${basename(PDFPath.path)}",
+            //           toastLength: Toast.LENGTH_LONG);
+            //     },
+            //     icon: Icon(Icons.download)),
             IconButton(
                 onPressed: () async {
                   final box = context.findRenderObject() as RenderBox?;
