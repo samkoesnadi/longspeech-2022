@@ -16,7 +16,8 @@ var logger = Logger(
 int fullVersionNoteAmount = 5;
 const fullVersionProductId = "fullversion";
 DateFormat dateFormat = DateFormat("EEEE, yyyy-MM-dd HH:mm");
-const allPossibleSymbols = "!'§<>|\$%&/()=?\\`´+*#,.-;:_^{}[]";
+const allPossibleSymbols = "!'§<>|\$%&/()=?\\`´+*#,.-;:_^{}[]￼";  // the last one here is unicode obj, so be careful in deleting, it is not space!
+RegExp allPossibleSymbolsRegex = RegExp(r"[!'§<>|$%&/()=?\\`´+*#,.-;:_^{}\[\]￼]");
 var commonEnglishWords = ew.all +
     ["has", "had", "been", "was", "is", "are", "be", "am", "none", "an", "a"] +
     "1234567890".split('');

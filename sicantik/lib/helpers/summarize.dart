@@ -17,6 +17,7 @@ Map<String, dynamic> summarize(
   if (docs.length > maxDocs) {
     docs = docs.sublist(0, maxDocs);
   }
+  // docs.removeWhere((e) => e.split(' ').length < 3);
 
   TokenizationOutput tokenOut = TokenizationOutput();
   tokenOut = documentTokenizer(docs);

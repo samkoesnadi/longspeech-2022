@@ -204,7 +204,7 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
 
   summarized = summarizedAndEntities["summarized"];
   entities = summarizedAndEntities["keywords"];
-  String filteredFullText = summarizedAndEntities["splittedDocs"].join(" ").replaceAll(RegExp("[$allPossibleSymbols]"), "");
+  String filteredFullText = summarizedAndEntities["splittedDocs"].join(" ").replaceAll(allPossibleSymbolsRegex, "");
 
   //// Identify text language
   await Fluttertoast.cancel();
