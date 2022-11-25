@@ -314,10 +314,12 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
             IconButton(
                 onPressed: () async {
                   final box = context.findRenderObject() as RenderBox?;
+                  await Fluttertoast.showToast(msg: "Please wait a moment...");
                   context.loaderOverlay.show();
                   File PDFPath = await exportToPdf(
                       (await getApplicationDocumentsDirectory()).path, title);
                   context.loaderOverlay.hide();
+                  await Fluttertoast.cancel();
                   await Share.shareXFiles(
                     [XFile(PDFPath.path)],
                     subject: title,
