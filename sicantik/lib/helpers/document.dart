@@ -71,6 +71,8 @@ Future<void> saveDocument(
   await noteStorage.write("noteIds",
       ((noteStorage.read("noteIds") ?? []) + [noteId]).toSet().toList());
   await saveStarred(isStarred, noteId);
+  await noteStorage.write(
+      "currentUntitledId", (noteStorage.read("currentUntitledId") ?? 1) + 1);
 }
 
 Future<List<String>> manageResources(
@@ -191,22 +193,25 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   String summarized = "";
   List<String> entities = [];
 
+  Map summarizedAndEntities = {"summarized": "", "keywords": [], "splittedDocs": []};
   try {
     await Fluttertoast.showToast(msg: "Summarizing...");
-    Map summarizedAndEntities =
+    summarizedAndEntities =
         summarize(paragraph: plainText, amountOfSentences: 15);
-    summarized = summarizedAndEntities["summarized"];
-    entities = summarizedAndEntities["keywords"];
   } catch (e) {
     logger.e(e);
   }
 
+  summarized = summarizedAndEntities["summarized"];
+  entities = summarizedAndEntities["keywords"];
+  String filteredFullText = summarizedAndEntities["splittedDocs"].join(" ").replaceAll(RegExp("[$allPossibleSymbols]"), "");
+
   //// Identify text language
   await Fluttertoast.cancel();
   await Fluttertoast.showToast(msg: "Identifying language...");
-  final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.1);
+  final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.25);
   final List<IdentifiedLanguage> possibleLanguages =
-      await languageIdentifier.identifyPossibleLanguages(summarized);
+      await languageIdentifier.identifyPossibleLanguages(filteredFullText);
   List<String> detectedLanguages = [];
   for (IdentifiedLanguage possibleLanguage in possibleLanguages) {
     detectedLanguages.add(possibleLanguage.languageTag);
@@ -247,7 +252,7 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   // }
 
   // Count word
-  int wordCount = RegExp(r"\w+").allMatches(plainText).length;
+  int wordCount = filteredFullText.split(" ").length;
 
   return {
     "summarized": summarized,

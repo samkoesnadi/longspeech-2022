@@ -18,7 +18,7 @@ TokenizationOutput documentTokenizer(List<String> documentList,
     int currentTotalWord = 0;
     List<String> words = documentList[k]
         .toLowerCase()
-        .replaceAll(RegExp(r"[^a-z0-9\-_ ]"), "")
+        .replaceAll(RegExp("[$allPossibleSymbols]"), "")
         .split(" ");
     words.removeWhere((element) =>
         allPossibleSymbols.contains(element) ||

@@ -27,7 +27,7 @@ Future initializeImageLabeler() async {
   const path = 'assets/ml/object_labeler.tflite';
   final modelPath = await getModel(path);
   final options = LocalLabelerOptions(
-      confidenceThreshold: 0.1, maxCount: 30, modelPath: modelPath);
+      confidenceThreshold: 0.25, maxCount: 30, modelPath: modelPath);
   imageLabeler = ImageLabeler(options: options);
 
   logger.d("ImageLabeler setup successfully");

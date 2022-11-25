@@ -36,10 +36,6 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    defaultConfig {
-        multiDexEnabled true
-    }
-
     compileSdkVersion 33
     ndkVersion flutter.ndkVersion
 
@@ -57,6 +53,7 @@ android {
     }
 
     defaultConfig {
+        multiDexEnabled true
         // Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.expressive.sicantik"
         // You can update the following values to match your application needs.
@@ -79,6 +76,9 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
+            ndk {
+                abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+            }
         }
     }
 

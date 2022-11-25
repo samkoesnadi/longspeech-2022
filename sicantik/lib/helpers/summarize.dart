@@ -9,18 +9,14 @@ Map<String, dynamic> summarize(
     {required String paragraph, int amountOfSentences = 10}) {
   logger.d("Summarize: $paragraph");
 
-  List<String> docs = splitIntoSentences(paragraph);
-
-  if (docs.isEmpty) {
-    return {"summarized": "", "keywords": []};
-  }
+  List<String> originalSplit = splitIntoSentences(paragraph, minLength: 1);
+  List<String> docs = [...originalSplit];
 
   // Set limit for maximum documents
   int maxDocs = 500;
   if (docs.length > maxDocs) {
     docs = docs.sublist(0, maxDocs);
   }
-  docs.removeWhere((e) => e.split(' ').length < 3);
 
   TokenizationOutput tokenOut = TokenizationOutput();
   tokenOut = documentTokenizer(docs);
@@ -41,6 +37,12 @@ Map<String, dynamic> summarize(
   }
   List keywords =
       keywordsCandidates.map((elem) => allWordsCapitilize(elem[0])).toList().cast<String>();
+
+  if (docs.isEmpty) {
+    return {"summarized": "", "keywords": [], "splittedDocs": originalSplit};
+  } else if (docs.length == 1) {
+    return {"summarized": docs[0], "keywords": keywords, "splittedDocs": originalSplit};
+  }
 
   List<List<double?>> tfidf =
     sentenceTfIdfMatrix(docs, wordProbability, tokenOut: tokenOut);
@@ -84,7 +86,7 @@ Map<String, dynamic> summarize(
     }
   }
 
-  return {"summarized": summarized, "keywords": keywords};
+  return {"summarized": summarized, "keywords": keywords, "splittedDocs": originalSplit};
 }
 
 List<String> splitIntoSentences(String text, {int minLength = 5}) {
@@ -98,7 +100,7 @@ List<String> splitIntoSentences(String text, {int minLength = 5}) {
   const digits = "([0-9])";
 
   text = " " + text + "  ";
-  text = text.replaceAll("\n", ".");
+
   text = text.replaceAllMapped(
       RegExp(digits + "[.]" + digits), (Match m) => "${m[1]}<prd>${m[2]}");
   text = text.replaceAllMapped(RegExp(prefixes), (Match m) => "${m[1]}<prd>");
@@ -126,18 +128,17 @@ List<String> splitIntoSentences(String text, {int minLength = 5}) {
   text = text.replaceAll(".", ".<stop>");
   text = text.replaceAll("?", "?<stop>");
   text = text.replaceAll("!", "!<stop>");
+  text = text.replaceAll("\n", "<stop>");
   text = text.replaceAll("<prd>", ".");
-  text += "<stop>";
+  // text += "<stop>";
   List<String> sentences = text.split("<stop>");
+
   // sentences.removeLast();
   sentences = sentences
-      .map((e) => e
-          .replaceAll(
-              RegExp(r"[^\w !'§<>|$%&/()=?\\`´+*#öäüÜÖÄ,.\-;:_^{}\[\]]"), "")
-          .trim())
+      .map((e) => e.trim())
       .toList();
   sentences
-      .removeWhere((element) => element == "" || element.length < minLength);
+      .removeWhere((element) => element == "" || allPossibleSymbols.contains(element) || element.length < minLength);
   sentences = sentences.map((e) {
     if (e.length >= 2) {
       if (allPossibleSymbols.contains(e[e.length - 2])) {

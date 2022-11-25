@@ -62,8 +62,7 @@ class _NewNoteScreenState extends State<NewNoteScreen>
   void initState() {
     Map<String, dynamic>? arguments = Get.arguments;
 
-    int untitledNumber =
-        getAndIncrementStorageValue("notes", "currentUntitledId");
+    int untitledNumber = noteStorage.read("currentUntitledId") ?? 1;
     String title = "${"untitled".tr} $untitledNumber";
     Document doc = Document();
 
@@ -321,7 +320,7 @@ class _NewNoteScreenState extends State<NewNoteScreen>
                   toastText += "none";
                 } else {
                   for (final label in labels) {
-                    if (label.confidence > 0.1) {
+                    if (label.confidence > 0.25) {
                       toastText += '\n- ${label.label}, '
                           'confidence: ${label.confidence.toStringAsFixed(2)}';
                       detectedObjects.add(label.label);
