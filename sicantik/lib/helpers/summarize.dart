@@ -36,11 +36,11 @@ Map<String, dynamic> summarize(
   if (keywordsCandidates.length > amountOfSentences) {
     keywordsCandidates = keywordsCandidates.sublist(0, amountOfSentences);
   }
-  List keywords =
+  List<String> keywords =
       keywordsCandidates.map((elem) => allWordsCapitilize(elem[0])).toList().cast<String>();
 
   if (docs.isEmpty) {
-    return {"summarized": "", "keywords": [], "splittedDocs": originalSplit};
+    return {"summarized": "", "keywords": keywords, "splittedDocs": originalSplit};
   } else if (docs.length == 1) {
     return {"summarized": docs[0], "keywords": keywords, "splittedDocs": originalSplit};
   }
