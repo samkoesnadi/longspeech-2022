@@ -62,8 +62,7 @@ class _NewNoteScreenState extends State<NewNoteScreen>
   void initState() {
     Map<String, dynamic>? arguments = Get.arguments;
 
-    int untitledNumber = noteStorage.read("currentUntitledId") ?? 1;
-    String title = "${"untitled".tr} $untitledNumber";
+    String title = "untitled".tr;
     Document doc = Document();
 
     if (arguments != null) {
@@ -227,37 +226,32 @@ class _NewNoteScreenState extends State<NewNoteScreen>
                 )),
             appBarKey: appBarKey,
             appBarActions: <Widget>[
-                  Padding(
-                      padding: EdgeInsets.only(right: (newDocument ? 16: 8)),
-                      child: StarButton(
-                          isStarred: allStarred.contains(noteId),
-                          iconColor: Colors.yellow,
-                          valueChanged: (_isStarred) {
-                            isStarred = _isStarred;
-                          })),
-                ] +
-                (newDocument
-                    ? []
-                    : [
-                        IconButton(
-                            padding: EdgeInsets.only(right: 8),
-                            onPressed: () async {
-                              await saveDocument(
-                                  noteId,
-                                  _titleController.text,
-                                  _quillController.document,
-                                  isStarred,
-                                  imageClassifications,
-                                  voiceRecordings,
-                                  videos,
-                                  noteCategory);
+              Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: StarButton(
+                      isStarred: allStarred.contains(noteId),
+                      iconColor: Colors.yellow,
+                      valueChanged: (_isStarred) {
+                        isStarred = _isStarred;
+                      })),
+              IconButton(
+                  padding: EdgeInsets.only(right: 8),
+                  onPressed: () async {
+                    await saveDocument(
+                        noteId,
+                        _titleController.text,
+                        _quillController.document,
+                        isStarred,
+                        imageClassifications,
+                        voiceRecordings,
+                        videos,
+                        noteCategory);
 
-                              Fluttertoast.cancel();
-                              await Fluttertoast.showToast(
-                                  msg: "The document is saved");
-                            },
-                            icon: const Icon(Icons.save))
-                      ])));
+                    Fluttertoast.cancel();
+                    await Fluttertoast.showToast(msg: "The document is saved");
+                  },
+                  icon: const Icon(Icons.save))
+            ]));
   }
 
   @override

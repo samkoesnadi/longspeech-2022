@@ -71,8 +71,6 @@ Future<void> saveDocument(
   await noteStorage.write("noteIds",
       ((noteStorage.read("noteIds") ?? []) + [noteId]).toSet().toList());
   await saveStarred(isStarred, noteId);
-  await noteStorage.write(
-      "currentUntitledId", (noteStorage.read("currentUntitledId") ?? 1) + 1);
 }
 
 Future<List<String>> manageResources(
@@ -210,11 +208,12 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   await Fluttertoast.cancel();
   await Fluttertoast.showToast(msg: "Identifying language...");
   final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.25);
-  final List<IdentifiedLanguage> possibleLanguages =
-      await languageIdentifier.identifyPossibleLanguages(filteredFullText);
+
   List<String> detectedLanguages = [];
-  for (IdentifiedLanguage possibleLanguage in possibleLanguages) {
-    detectedLanguages.add(possibleLanguage.languageTag);
+  for (String sentence in summarizedAndEntities["splittedDocs"]) {
+    final List<IdentifiedLanguage> possibleLanguages =
+      await languageIdentifier.identifyPossibleLanguages(sentence);
+    detectedLanguages.add(possibleLanguages[0].languageTag);
   }
   languageIdentifier.close();
   await Fluttertoast.cancel();

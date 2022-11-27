@@ -19,7 +19,6 @@
   * {noteId}-videos : list of videos
   * {noteId}-voiceRecordings : list of voice recordings
   * {noteId}-inAppReviewTrack : dictionary {done, datetime}
-  * currentUntitledId : int
 
 * Reminders
   * lastId

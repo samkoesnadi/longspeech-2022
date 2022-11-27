@@ -330,7 +330,7 @@ class BubbleShowcaseViewNoteWidget extends StatelessWidget {
                     child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Text(
-                            'You can also download your written note in PDF format, and share it to social media or E-mail. Sharing is caring, am I right?',
+                            'You can also share the note in PDF to social media or E-mail. Sharing is caring, am I right?',
                             style: TextStyle(color: Colors.white),
                             textAlign: TextAlign.center)),
                   )),

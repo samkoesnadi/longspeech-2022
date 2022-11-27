@@ -77,14 +77,6 @@ class Reminder {
   Reminder({required this.id, this.datetime});
 }
 
-int getAndIncrementStorageValue(String storageName, String key) {
-  final storage = GetStorage(storageName);
-  int value = storage.read(key) ?? -1;
-  value = (value + 1) % 100;
-  storage.write(key, value);
-  return value;
-}
-
 String allWordsCapitilize(String value) {
   var result = value[0].toUpperCase();
   for (int i = 1; i < value.length; i++) {

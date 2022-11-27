@@ -312,6 +312,7 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
             //     },
             //     icon: Icon(Icons.download)),
             IconButton(
+                padding: EdgeInsets.only(right: 8),
                 onPressed: () async {
                   final box = context.findRenderObject() as RenderBox?;
                   await Fluttertoast.showToast(msg: "Please wait a moment...");
