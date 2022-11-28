@@ -297,7 +297,7 @@ class HomeScreenState extends State<HomeScreen> {
                 // Handle the error.
                 await Fluttertoast.showToast(
                     msg:
-                        "Expressive Note app cannot find the item on Play Store");
+                        "Expressive Notes app cannot find the item on Play Store");
                 return;
               }
               List<ProductDetails> products = response.productDetails;

@@ -24,3 +24,6 @@
   * lastId
   * {reminderId} : the date
   * currentFreeId : int
+
+To compile App Bundle:
+`flutter build appbundle --obfuscate --split-debug-info=$PWD/build/debug`

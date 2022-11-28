@@ -324,7 +324,7 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
                   await Share.shareXFiles(
                     [XFile(PDFPath.path)],
                     subject: title,
-                    text: "Created by Expressive Note app: $title\n\n$description",
+                    text: "Created by Expressive Notes app: $title\n\n$description",
                     sharePositionOrigin:
                         box!.localToGlobal(Offset.zero) & box.size,
                   );
@@ -340,7 +340,7 @@ class _ViewNoteScreenState extends State<ViewNoteScreen>
     final generatedPdfFile = await exportToPDF(
         _quillController.document.toDelta().toJson(),
         directory,
-        "$title from Expressive Note app");
+        "$title from Expressive Notes app");
     return generatedPdfFile;
   }
 }

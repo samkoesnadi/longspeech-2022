@@ -209,12 +209,13 @@ Future<Map<String, dynamic>> aiAnalysis(String plainText) async {
   await Fluttertoast.showToast(msg: "Identifying language...");
   final languageIdentifier = LanguageIdentifier(confidenceThreshold: 0.25);
 
-  List<String> detectedLanguages = [];
+  Set<String> detectedLanguagesSet = {};
   for (String sentence in summarizedAndEntities["splittedDocs"]) {
     final List<IdentifiedLanguage> possibleLanguages =
       await languageIdentifier.identifyPossibleLanguages(sentence);
-    detectedLanguages.add(possibleLanguages[0].languageTag);
+    detectedLanguagesSet.add(possibleLanguages[0].languageTag);
   }
+  List<String> detectedLanguages = detectedLanguagesSet.toList();
   languageIdentifier.close();
   await Fluttertoast.cancel();
 
